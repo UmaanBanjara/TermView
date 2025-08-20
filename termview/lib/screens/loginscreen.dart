@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:termview/helpers/validators.dart';
+import 'package:termview/screens/forgotpass/sendemail.dart';
+import 'package:termview/screens/homescreen.dart';
 import 'package:termview/screens/signupscreen.dart';
 import 'package:termview/widgets/page_transition.dart';
 import 'package:termview/widgets/snackbar.dart';
@@ -58,6 +60,7 @@ class _LoginscreenState extends State<Loginscreen> {
                     child: ElevatedButton(onPressed: (){
                     if(_formkey.currentState!.validate()){
                       showTerminalSnackbar(context, "Login successful" , isError: true);
+                      navigate(context, Homescreen());
                     }
                     }, 
                     style: ElevatedButton.styleFrom(
@@ -78,6 +81,19 @@ class _LoginscreenState extends State<Loginscreen> {
                   )
                   ,child: Text('Signup?')),
                 ),
+                ],
+              ),
+              SizedBox(height: 10,),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ElevatedButton(onPressed: (){
+                    navigate(context, Sendemail());
+                  }, 
+                  style: ElevatedButton.styleFrom(
+                    textStyle: text.bodyMedium,
+                  )
+                  ,child: Text('Forgot Password?'))
                 ],
               )
             ],
