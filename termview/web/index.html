@@ -1,38 +1,64 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
   <base href="$FLUTTER_BASE_HREF">
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="Termview Web App">
 
   <!-- iOS meta tags & icons -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="termview">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
-
-  <!-- Favicon -->
   <link rel="icon" type="image/png" href="mainfavi.png"/>
-
   <title>termview</title>
   <link rel="manifest" href="manifest.json">
+
+  <style>
+    body {
+      margin: 0;
+      background-color: #1E1E1E; /* matches your Flutter dark theme */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    #lottie-loader {
+      width: 300px;
+      height: 300px;
+      opacity: 1;
+      transition: opacity 0.5s; /* smooth fade */
+    }
+  </style>
 </head>
 <body>
+  <!-- Lottie animation container -->
+  <div id="lottie-loader"></div>
+
+  <!-- Lottie Web Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.10.2/lottie.min.js"></script>
   <script src="flutter_bootstrap.js" async></script>
+
+  <script>
+    // Load Lottie animation
+    var animation = lottie.loadAnimation({
+      container: document.getElementById('lottie-loader'),
+      renderer: 'svg',
+      loop: false, // play only once
+      autoplay: true,
+      path: 'assets/animation/hand.json' // your Lottie JSON path
+    });
+
+    // When animation completes, fade out loader then remove it
+    animation.addEventListener('complete', function() {
+      const loader = document.getElementById('lottie-loader');
+      loader.style.opacity = '0'; // fade out
+      setTimeout(() => loader.remove(), 500); // remove after fade
+    });
+  </script>
 </body>
 </html>

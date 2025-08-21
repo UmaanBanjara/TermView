@@ -31,15 +31,12 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter:
     sdk: flutter
-  page_transition: ^2.2.1
   form_builder_validators: ^11.0.0
+  image_picker: ^1.1.2
+  lottie: ^3.2.0
+  page_transition: ^2.2.1
 
 dev_dependencies:
-  # The "flutter_lints" package below contains a set of recommended lints to
-  # encourage good coding practices. The lint set provided by the package is
-  # activated in the `analysis_options.yaml` file located at the root of your
-  # package. See that file for information about deactivating specific lint
-  # rules and activating additional ones.
   flutter_lints: ^4.0.0
   flutter_test:
     sdk: flutter
@@ -54,8 +51,9 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
+  assets:
+    - assets/animation/hand.json
+    - assets/images/fallbackthumbnail.png
   #   - images/a_dot_ham.jpeg
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

@@ -14,10 +14,11 @@ String? validateUsername(String? value) {
 
 String? validateEmail(String? value) {
   if (value == null || value.isEmpty) return 'Email is required';
-  final regex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-  if (!regex.hasMatch(value)) return 'Invalid email';
+  final regex = RegExp(r'^[\w-\.]+@gmail\.com$');
+  if (!regex.hasMatch(value)) return 'Only Gmail addresses are allowed';
   return null;
 }
+
 
 String? validatePassword(String? value) {
   if (value == null || value.isEmpty) return 'Password is required';
@@ -33,3 +34,8 @@ String? validatePassword(String? value) {
 
   return null;
 }
+
+String? validateNotEmpty(String? value, String fieldName) {
+    if (value == null || value.isEmpty) return '$fieldName is required';
+    return null;
+  }
