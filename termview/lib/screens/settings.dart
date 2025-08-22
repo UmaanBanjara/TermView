@@ -15,34 +15,42 @@ class _SettingsState extends State<Settings> {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     return Scaffold(
-      body: Center(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Settings Page', style: text.bodyLarge,),
-            SizedBox(height: 10,),
-            ListTile(
-              onTap: (){
-                navigate(context, Sendemail());
-              },
-              leading: Icon(Icons.lock_outline),
-              title: Text("Forgot Password", style: text.bodyMedium,),
-            ),
-            ListTile(
-              onTap: (){
-                navigate(context, SendDelemail());
-              },
-              leading: Icon(Icons.delete_outline),
-              title: Text("Delete Account" , style: text.bodyMedium,),
-            ),
-            ListTile(
-              onTap: (){
-                
-              },
-              leading: Icon(Icons.logout),
-              title: Text("Logout" , style: text.bodyMedium,),
-            ),
-          ],
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        leading: BackButton(),
+        centerTitle: false,
+        title: Text('Settings', style: text.bodyLarge,),
+
+      ),
+      body: Padding(
+        padding: EdgeInsets.all(8),
+        child: Center(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ListTile(
+                onTap: (){
+                  navigate(context, Sendemail());
+                },
+                leading: Icon(Icons.lock_outline),
+                title: Text("Forgot Password", style: text.bodyMedium,),
+              ),
+              ListTile(
+                onTap: (){
+                  navigate(context, SendDelemail());
+                },
+                leading: Icon(Icons.delete_outline),
+                title: Text("Delete Account" , style: text.bodyMedium,),
+              ),
+              ListTile(
+                onTap: (){
+                  
+                },
+                leading: Icon(Icons.logout),
+                title: Text("Logout" , style: text.bodyMedium,),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -2,6 +2,8 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:termview/helpers/imagepicker_web_helper.dart';
 import 'package:termview/helpers/validators.dart';
+import 'package:termview/screens/livesession.dart';
+import 'package:termview/widgets/page_transition.dart';
 import 'package:termview/widgets/snackbar.dart';
 
 class Createsession extends StatefulWidget {
@@ -22,15 +24,19 @@ class _CreatesessionState extends State<Createsession> {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        centerTitle: false,
+        leading: BackButton(),
+        title:Text('Create New Session', style: text.bodyLarge),
+      ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
+        padding: EdgeInsets.all(8),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Create New Session', style: text.bodyLarge),
-              SizedBox(height: 10),
               TextFormField(
                 controller: _title,
                 maxLines: 1,
@@ -142,8 +148,12 @@ class _CreatesessionState extends State<Createsession> {
                     child: ElevatedButton(
                       onPressed: () {
                         if (_formKey.currentState!.validate()) {
-                          print("Title: ${_title.text}");
-                          print("Description: ${_desc.text}");
+                          showTerminalSnackbar(context, 'Session created successfully' , isError: false);
+                          navigate(context, Livesession());
+                        }
+                        else{
+                          showTerminalSnackbar(context, 'Failed to create session. Please try again' , isError: true);
+                          return;
                         }
                       },
                       style: ElevatedButton.styleFrom(
