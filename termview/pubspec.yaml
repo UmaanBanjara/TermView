@@ -31,10 +31,11 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter:
     sdk: flutter
+  flutter_riverpod: ^2.6.1
   image_picker: ^1.1.2
+  http: ^1.5.0
   lottie: ^3.2.0
   page_transition: ^2.2.1
-  flutter_riverpod: ^2.6.1
 
 dev_dependencies:
   flutter_lints: ^4.0.0
@@ -54,6 +55,7 @@ flutter:
   assets:
     - assets/animation/hand.json
     - assets/images/fallbackthumbnail.png
+    - assets/animation/loading.json
   #   - images/a_dot_ham.jpeg
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
