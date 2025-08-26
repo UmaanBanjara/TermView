@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from app.models.users import User
 from app.testdb.db import SessionLocal
+from app.utils.security import hash_password
 
 #function to create a new user
 def create_user(fname:str, lname:str ,username:str , email:str , password:str):
@@ -11,7 +12,7 @@ def create_user(fname:str, lname:str ,username:str , email:str , password:str):
             lname=lname,
             username=username,
             email=email,
-            password=password
+            password=hash_password(password)
         )
         db.add(new_user)
         db.commit()
