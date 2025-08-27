@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lottie/lottie.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:termview/data/notifiers/signup_notifier.dart';
 import 'package:termview/data/providers/signup_provider.dart';
 import 'package:termview/helpers/validators.dart';
@@ -92,8 +92,7 @@ class _SignupscreenState extends ConsumerState<Signupscreen> {
                 children: [
                   Expanded(
                     child: signupstate.loading
-                        ? Lottie.asset('assets/animation/loading.json',
-                            width: 60, height: 60, fit: BoxFit.contain)
+                        ? Center(child: SpinKitFadingFour(color: Colors.white),)
                         : ElevatedButton(
                             onPressed: () {
                               if (_formkey.currentState!.validate()) {
