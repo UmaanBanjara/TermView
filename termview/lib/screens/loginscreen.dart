@@ -31,8 +31,10 @@ class _LoginscreenState extends ConsumerState<Loginscreen> {
           showTerminalSnackbar(context, next.message! , isError: false);
           navigate(context, Homescreen());
         } else if(next.error != null && next.error != previous?.error){
-          showTerminalSnackbar(context, next.error! , isError: true);
-          return;
+          WidgetsBinding.instance.addPostFrameCallback((_){
+            showTerminalSnackbar(context, next.error! , isError: true);
+            return;
+          });
         }
       });
 

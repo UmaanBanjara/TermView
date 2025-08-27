@@ -33,7 +33,11 @@ class _SignupscreenState extends ConsumerState<Signupscreen> {
         showTerminalSnackbar(context, next.message!, isError: false);
         navigate(context, Loginscreen());
       } else if (next.error != null && next.error != previous?.error) {
+        WidgetsBinding.instance.addPostFrameCallback((_){
         showTerminalSnackbar(context, next.error!, isError: true);
+        return;
+
+        });
       }
     });
 
