@@ -19,8 +19,8 @@ class SignupState{
   }){
     return SignupState(
       loading: loading ?? this.loading,
-      error: error,
-      message: message
+      error: error ?? this.error,
+      message: message ?? this.message
     );
   }
 

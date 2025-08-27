@@ -36,6 +36,7 @@ dependencies:
   http: ^1.5.0
   lottie: ^3.2.0
   page_transition: ^2.2.1
+  flutter_spinkit: ^5.2.2
 
 dev_dependencies:
   flutter_lints: ^4.0.0
@@ -55,7 +56,6 @@ flutter:
   assets:
     - assets/animation/hand.json
     - assets/images/fallbackthumbnail.png
-    - assets/animation/loading.json
   #   - images/a_dot_ham.jpeg
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
