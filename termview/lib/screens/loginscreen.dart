@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:termview/data/notifiers/login_notifier.dart';
+import 'package:termview/data/providers/login_provider.dart';
 import 'package:termview/helpers/validators.dart';
 import 'package:termview/screens/forgotpass/sendemail.dart';
 import 'package:termview/screens/homescreen.dart';
@@ -6,20 +10,32 @@ import 'package:termview/screens/signupscreen.dart';
 import 'package:termview/widgets/page_transition.dart';
 import 'package:termview/widgets/snackbar.dart';
 
-class Loginscreen extends StatefulWidget {
+class Loginscreen extends ConsumerStatefulWidget {
   const Loginscreen({super.key});
 
   @override
-  State<Loginscreen> createState() => _LoginscreenState();
+  ConsumerState<Loginscreen> createState() => _LoginscreenState();
 }
 
-class _LoginscreenState extends State<Loginscreen> {
+class _LoginscreenState extends ConsumerState<Loginscreen> {
   final _formkey = GlobalKey<FormState>();
-  final TextEditingController _login = TextEditingController();
+  final TextEditingController _email = TextEditingController();
   final TextEditingController _password = TextEditingController();
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+      final loginstate = ref.watch(LoginnotifierProvider);
+
+      ref.listen<LoginState>(LoginnotifierProvider , (previous , next){
+        if(next.message != null && next.message != previous?.message){
+          showTerminalSnackbar(context, next.message! , isError: false);
+          navigate(context, Homescreen());
+        } else if(next.error != null && next.error != previous?.error){
+          showTerminalSnackbar(context, next.error! , isError: true);
+          return;
+        }
+      });
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -37,7 +53,7 @@ class _LoginscreenState extends State<Loginscreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 TextFormField(
-                  controller: _login,
+                  controller: _email,
                   cursorHeight: 22,
                   style: text.bodyMedium,
                   decoration: InputDecoration(
@@ -63,10 +79,12 @@ class _LoginscreenState extends State<Loginscreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
-                      child: ElevatedButton(onPressed: (){
+                      child:
+                      loginstate.loading ? Center(child: SpinKitFadingFour(color: Colors.white,))
+                      :
+                      ElevatedButton(onPressed: ()async{
                       if(_formkey.currentState!.validate()){
-                        showTerminalSnackbar(context, "Login successful" , isError: false);
-                        navigate(context, Homescreen());
+                        ref.read(LoginnotifierProvider.notifier).login(_email.text, _password.text);
                       }
                       }, 
                       style: ElevatedButton.styleFrom(
