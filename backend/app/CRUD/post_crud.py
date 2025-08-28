@@ -3,7 +3,7 @@ from app.models.live import Live
 from app.testdb.db import SessionLocal
 
 #function to create a new post
-def create_post(title : str , desc : str , enable_chat : bool , thumbnail_url):
+def create_post(title : str , desc : str , enable_chat : bool , thumbnail_url , user_id : str):
     db:Session = SessionLocal()
     try:
         new_post = Live(
@@ -11,6 +11,7 @@ def create_post(title : str , desc : str , enable_chat : bool , thumbnail_url):
             desc = desc,
             thumb = thumbnail_url,
             is_live = enable_chat,
+            user_id = user_id
         )
         db.add(new_post)
         db.commit()
