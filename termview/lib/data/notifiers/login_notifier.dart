@@ -10,18 +10,20 @@ class LoginState{
   LoginState({
     this.loading = false,
     this.error,
-    this.message
+    this.message,
+    
   });
 
   LoginState copyWith({
     bool? loading,
     String? error,
-    String? message,
+    String? message,  
+    int? userId,
   }){
     return LoginState(
       loading: loading ?? this.loading,
       error: error ?? this.error,
-      message: message ?? this.message
+      message: message ?? this.message,
     );
   }
 }
@@ -35,10 +37,13 @@ class LoginNotifier extends StateNotifier<LoginState> {
 
     try{
       final result = await repository.login(email: email, password: password);
+
+      
+
       state = state.copyWith(
         loading: false,
         message: result['message'],
-        error: null
+        error: null,
       );
     }
     catch(e){

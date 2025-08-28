@@ -27,6 +27,7 @@ class _LoginscreenState extends ConsumerState<Loginscreen> {
       final loginstate = ref.watch(LoginnotifierProvider);
 
       ref.listen<LoginState>(LoginnotifierProvider , (previous , next){
+        
         if(next.message != null && next.message != previous?.message){
           showTerminalSnackbar(context, next.message! , isError: false);
           navigate(context, Homescreen());
@@ -86,7 +87,7 @@ class _LoginscreenState extends ConsumerState<Loginscreen> {
                       :
                       ElevatedButton(onPressed: ()async{
                       if(_formkey.currentState!.validate()){
-                        ref.read(LoginnotifierProvider.notifier).login(_email.text, _password.text);
+                       await ref.read(LoginnotifierProvider.notifier).login(_email.text, _password.text);
                       }
                       }, 
                       style: ElevatedButton.styleFrom(
