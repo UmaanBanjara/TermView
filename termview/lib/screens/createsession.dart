@@ -1,28 +1,48 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:termview/data/notifiers/post_notifier.dart';
+import 'package:termview/data/providers/post_provider.dart';
 import 'package:termview/helpers/imagepicker_web_helper.dart';
+import 'package:termview/helpers/randomfilename.dart';
 import 'package:termview/helpers/validators.dart';
 import 'package:termview/screens/livesession.dart';
 import 'package:termview/widgets/page_transition.dart';
 import 'package:termview/widgets/snackbar.dart';
 
-class Createsession extends StatefulWidget {
+class Createsession extends ConsumerStatefulWidget {
   const Createsession({super.key});
 
   @override
-  State<Createsession> createState() => _CreatesessionState();
+  ConsumerState<Createsession> createState() => _CreatesessionState();
 }
 
-class _CreatesessionState extends State<Createsession> {
+class _CreatesessionState extends ConsumerState<Createsession> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _title = TextEditingController();
   final TextEditingController _desc = TextEditingController();
   bool _chatenabled = false;
   Uint8List? _selectedImage;
-  
+
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    final poststate = ref.watch(PostnotiferProvider);
+
+    ref.listen<PostState>(PostnotiferProvider , (previous , next){
+      if(next.message != null && next.message != previous?.message){
+        showTerminalSnackbar(context, next.message! , isError: false);
+        navigate(context, Livesession());
+      }
+      else if (next.error != null && next.error != previous?.error){
+        WidgetsBinding.instance.addPostFrameCallback((_){
+          showTerminalSnackbar(context, next.error! , isError: true);
+          return;
+        });
+      }
+    });
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -145,17 +165,25 @@ class _CreatesessionState extends State<Createsession> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          showTerminalSnackbar(context, 'Session created successfully' , isError: false);
-                          navigate(context, Livesession());
-                        }
-                        else{
-                          showTerminalSnackbar(context, 'Failed to create session. Please try again' , isError: true);
-                          return;
-                        }
-                      },
+                    child: 
+                    poststate.loading ? Center(child : SpinKitFadingFour(color: Colors.white,))
+                    :
+                    ElevatedButton(
+                      onPressed: () async {
+                          if (!_formKey.currentState!.validate()) {
+                            showTerminalSnackbar(context, 'Failed to create session. Please try again', isError: true);
+                            return;
+                          }
+                          String fileName = generateRandomFileName();
+                          ref.read(PostnotiferProvider.notifier).post(
+                            title: _title.text,
+                            desc: _desc.text,
+                            enableChat: _chatenabled,
+                            fileBytes: _selectedImage!,
+                            fileName: fileName,
+                          );
+                        },
+
                       style: ElevatedButton.styleFrom(
                         textStyle: text.bodyMedium,
                         minimumSize: Size(0, 50),
