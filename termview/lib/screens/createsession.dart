@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:termview/data/notifiers/post_notifier.dart';
+import 'package:termview/data/providers/login_provider.dart';
 import 'package:termview/data/providers/post_provider.dart';
 import 'package:termview/helpers/imagepicker_web_helper.dart';
 import 'package:termview/helpers/randomfilename.dart';
@@ -174,6 +175,12 @@ class _CreatesessionState extends ConsumerState<Createsession> {
                             showTerminalSnackbar(context, 'Failed to create session. Please try again', isError: true);
                             return;
                           }
+                          final token = await ref.read(LoginnotifierProvider.notifier).getToken();
+                          if(token == null){
+                            showTerminalSnackbar(context, "User not logged in", isError: true);
+                            return;
+                          }
+
                           String fileName = generateRandomFileName();
                           ref.read(PostnotiferProvider.notifier).post(
                             title: _title.text,
@@ -181,6 +188,7 @@ class _CreatesessionState extends ConsumerState<Createsession> {
                             enableChat: _chatenabled,
                             fileBytes: _selectedImage!,
                             fileName: fileName,
+                            token: token
                           );
                         },
 
