@@ -12,6 +12,7 @@ class PostRepository {
     required Uint8List fileBytes, //can't directly send file on web , only raw bytes
     required String fileName,
     required bool enableChat,
+    required String token,
   })async{
     final url = Uri.parse('$baseUrl/auth/upload/thumbnail');
     final request = http.MultipartRequest('POST', url);
@@ -21,6 +22,8 @@ class PostRepository {
     request.fields['title'] = title; // adding title form field
     request.fields['desc'] = desc; // adding description form field
     request.fields['enable_chat'] = enableChat.toString(); // adding enable_chat form field
+
+    request.headers['Authorization'] = 'Bearer $token';
 
     final streamedResponse = await request.send();
     final response = await http.Response.fromStream(streamedResponse);
