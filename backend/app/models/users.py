@@ -13,4 +13,7 @@ class User(Base):
     password = Column(String, nullable=False)
 
     #relationship to live
-    lives = relationship("Live" , back_populates="user")
+    lives = relationship("Live" , back_populates="user" , cascade="all, delete-orphan")
+
+    #relationship with quiz
+    quizzes = relationship("Quiz" , back_populates="user" , cascade="all, delete-orphan")
