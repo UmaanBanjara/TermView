@@ -1,22 +1,43 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:termview/data/notifiers/quiz_notifier.dart';
+import 'package:termview/data/providers/login_provider.dart';
+import 'package:termview/data/providers/quiz_provider.dart';
+import 'package:termview/widgets/snackbar.dart';
 
-class Createquiz extends StatefulWidget {
+class Createquiz extends ConsumerStatefulWidget {
   const Createquiz({super.key});
 
   @override
-  State<Createquiz> createState() => _CreatequizState();
+  ConsumerState<Createquiz> createState() => _CreatequizState();
 }
 
-class _CreatequizState extends State<Createquiz> {
+class _CreatequizState extends ConsumerState<Createquiz> {
+  final _formKey = GlobalKey<FormState>();
   final TextEditingController _ques = TextEditingController();
   final TextEditingController _ans = TextEditingController();
   final TextEditingController _op1 = TextEditingController();
   final TextEditingController _op2 = TextEditingController();
   final TextEditingController _op3 = TextEditingController();
   final TextEditingController _op4 = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    final quizstate = ref.watch(quiznotifierProvider);
+    ref.listen<QuizState>(quiznotifierProvider , (previous , next){
+      if(next.message!=null && next.message != previous?.message){
+        showTerminalSnackbar(context, next.message! , isError: false);
+        Navigator.pop(context);
+      }
+      else if (next.error != null && next.error != previous?.error){
+        WidgetsBinding.instance.addPostFrameCallback((_){
+          showTerminalSnackbar(context, next.error! , isError: true);
+          return;
+        });
+      }
+    });
     return Scaffold(
       appBar: AppBar(
         centerTitle: false,
@@ -25,92 +46,120 @@ class _CreatequizState extends State<Createquiz> {
         leading: BackButton(),
       ),
       body: Center(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextField(
-              controller: _ques,
-              cursorHeight: 22,
-              style: text.bodyMedium,
-              decoration: InputDecoration(
-                hintText: "Enter your question"
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextFormField(
+                controller: _ques,
+                cursorHeight: 22,
+                style: text.bodyMedium,
+                decoration: InputDecoration(
+                  hintText: "Enter your question"
+                ),
+                validator: (value) => value == null || value.isEmpty ? "Question cannot be empty" : null,
               ),
-            ),
-            SizedBox(height: 10,),
-            TextField(
-              controller: _op1,
-              cursorHeight: 22,
-              style: text.bodyMedium,
-              decoration: InputDecoration(
-                hintText: "Option 1"
+              SizedBox(height: 10,),
+              TextFormField(
+                controller: _op1,
+                cursorHeight: 22,
+                style: text.bodyMedium,
+                decoration: InputDecoration(
+                  hintText: "Option 1"
+                ),
+                validator: (value) => value == null || value.isEmpty ? "Option 1 cannot be empty" : null,
               ),
-            ),
-            SizedBox(height: 10,),
-            TextField(
-              controller: _op2,
-              cursorHeight: 22,
-              style: text.bodyMedium,
-              decoration: InputDecoration(
-                hintText: "Option 2"
+              SizedBox(height: 10,),
+              TextFormField(
+                controller: _op2,
+                cursorHeight: 22,
+                style: text.bodyMedium,
+                decoration: InputDecoration(
+                  hintText: "Option 2"
+                ),
+                validator: (value) => value == null || value.isEmpty ? "Option 2 cannot be empty" : null,
               ),
-            ),
-            SizedBox(height: 10,),
-            TextField(
-              controller: _op3,
-              cursorHeight: 22,
-              style: text.bodyMedium,
-              decoration: InputDecoration(
-                hintText: "Option 3"
+              SizedBox(height: 10,),
+              TextFormField(
+                controller: _op3,
+                cursorHeight: 22,
+                style: text.bodyMedium,
+                decoration: InputDecoration(
+                  hintText: "Option 3"
+                ),
+                validator: (value) => value == null || value.isEmpty ? "Option 3 cannot be empty" : null,
               ),
-            ),
-            SizedBox(height: 10,),
-            TextField(
-              controller: _op4,
-              cursorHeight: 22,
-              style: text.bodyMedium,
-              decoration: InputDecoration(
-                hintText: "Option 4"
+              SizedBox(height: 10,),
+              TextFormField(
+                controller: _op4,
+                cursorHeight: 22,
+                style: text.bodyMedium,
+                decoration: InputDecoration(
+                  hintText: "Option 4"
+                ),
+                validator: (value) => value == null || value.isEmpty ? "Option 4 cannot be empty" : null,
               ),
-            ),
-            SizedBox(height: 20,),
-            TextField(
-              controller: _ans,
-              cursorHeight: 22,
-              style: text.bodyMedium,
-              decoration: InputDecoration(
-                hintText: "Enter Answer of the question"
+              SizedBox(height: 20,),
+              TextFormField(
+                controller: _ans,
+                cursorHeight: 22,
+                style: text.bodyMedium,
+                decoration: InputDecoration(
+                  hintText: "Enter Answer of the question"
+                ),
+                validator: (value) => value == null || value.isEmpty ? "Answer cannot be empty" : null,
               ),
-            ),
-            SizedBox(height: 10,),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                      child: ElevatedButton(onPressed: (){
-                      
+              SizedBox(height: 10,),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: quizstate.loading ? Center(child: SpinKitFadingFour(color: Colors.white,),)
+                    :
+                    ElevatedButton(
+                      onPressed: () async {
+                        if (_formKey.currentState!.validate()) {
+                          final token = await ref.read(LoginnotifierProvider.notifier).getToken();
+                          if(token == null){
+                            showTerminalSnackbar(context, "Invalid Token" , isError: true);
+                            return;
+                          }
+                          await ref.read(quiznotifierProvider.notifier).quiz(
+                            token: token, 
+                            ques: _ques.text, 
+                            a1: _op1.text,
+                            a2: _op2.text, 
+                            a3: _op3.text, 
+                            a4: _op4.text, 
+                            ans: _ans.text
+                          );
+                        }
                       }, 
                       style: ElevatedButton.styleFrom(
                         minimumSize: Size(0, 50),
                         textStyle: text.bodyMedium
-                      )
-                      ,child: Text("Create")),
-                    ), 
-            
+                      ),
+                      child: Text("Create")
+                    ),
+                  ), 
                   SizedBox(width: 20,),
                   Expanded(
-                    child: ElevatedButton(onPressed: (){
-                    }, 
-                    style: ElevatedButton.styleFrom(
-                      textStyle: text.bodyMedium,
-                      minimumSize: Size(0, 50)
-                    )
-                    ,child: Text('Cancel')),
+                    child: ElevatedButton(
+                      onPressed: (){
+                        Navigator.pop(context);
+                      }, 
+                      style: ElevatedButton.styleFrom(
+                        textStyle: text.bodyMedium,
+                        minimumSize: Size(0, 50)
+                      ),
+                      child: Text('Cancel')
+                    ),
                   ),
- 
-              ],
-            )
-
-          ],
+                ],
+              )
+            ],
+          ),
         ),
       ),
     );
