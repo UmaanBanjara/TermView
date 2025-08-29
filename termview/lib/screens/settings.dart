@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:termview/screens/deleteacc/senddelemail.dart';
-import 'package:termview/screens/forgotpass/sendemail.dart';
+import 'package:termview/screens/deleteacc/deleteacc.dart';
+import 'package:termview/screens/forgotpass/resetpass.dart';
 import 'package:termview/widgets/page_transition.dart';
 
 class Settings extends StatefulWidget {
@@ -30,14 +30,14 @@ class _SettingsState extends State<Settings> {
             children: [
               ListTile(
                 onTap: (){
-                  navigate(context, Sendemail());
+                  navigate(context, Resetpass());
                 },
                 leading: Icon(Icons.lock_outline),
-                title: Text("Forgot Password", style: text.bodyMedium,),
+                title: Text("Change Password", style: text.bodyMedium,),
               ),
               ListTile(
                 onTap: (){
-                  navigate(context, SendDelemail());
+                  navigate(context, Deleteacc());
                 },
                 leading: Icon(Icons.delete_outline),
                 title: Text("Delete Account" , style: text.bodyMedium,),
