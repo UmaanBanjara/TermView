@@ -4,7 +4,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:termview/data/notifiers/login_notifier.dart';
 import 'package:termview/data/providers/login_provider.dart';
 import 'package:termview/helpers/validators.dart';
-import 'package:termview/screens/forgotpass/sendemail.dart';
+import 'package:termview/screens/forgotpass/resetpass.dart';
 import 'package:termview/screens/homescreen.dart';
 import 'package:termview/screens/signupscreen.dart';
 import 'package:termview/widgets/page_transition.dart';
@@ -115,7 +115,7 @@ class _LoginscreenState extends ConsumerState<Loginscreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     ElevatedButton(onPressed: (){
-                      navigate(context, Sendemail());
+                      navigate(context, Resetpass());
                     }, 
                     style: ElevatedButton.styleFrom(
                       textStyle: text.bodyMedium,
