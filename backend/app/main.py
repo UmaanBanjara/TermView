@@ -6,6 +6,7 @@ from app.routes.auth import upload_auth
 from app.routes.auth import changepass_auth
 from app.routes.auth import deleteacc_auth
 from app.routes.auth import quiz_auth
+from app.routes.auth import fetchall_auth
 
 app = FastAPI(title = "TermView API")
 
@@ -24,6 +25,7 @@ app.include_router(upload_auth.router , prefix="/auth" , tags=["Upload"])
 app.include_router(changepass_auth.router , prefix="/auth" , tags=["Change Password"])
 app.include_router(deleteacc_auth.router , prefix="/auth" , tags=["Delete Account"])
 app.include_router(quiz_auth.router , prefix="/quiz" , tags=["Quiz"])
+app.include_router(fetchall_auth.router , prefix="/fetch" , tags=["Fetch all Live"])
 
 #root endpoint
 @app.get("/")
