@@ -1,44 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:termview/data/providers/fetchall_provider.dart';
 import 'package:termview/screens/createsession.dart';
 import 'package:termview/screens/settings.dart';
 import 'package:termview/widgets/page_transition.dart';
 
-class Homescreen extends StatefulWidget {
+class Homescreen extends ConsumerStatefulWidget {
   const Homescreen({super.key});
 
   @override
-  State<Homescreen> createState() => _HomescreenState();
+  ConsumerState<Homescreen> createState() => _HomescreenState();
 }
 
-class _HomescreenState extends State<Homescreen> {
-  final List<Map<String, dynamic>> sessions = [
-    {
-      "title": "Flutter Basics",
-      "author": "Umaan",
-      "isLive": true,
-      "thumbnail":
-          "https://res.cloudinary.com/dtuxl8mui/image/upload/v1756449484/thumbnail_muhoa3jl.jpg.jpg"
-    },
-    {
-      "title": "Python 101",
-      "author": "Alice",
-      "isLive": false,
-      "thumbnail":
-          "https://res.cloudinary.com/dtuxl8mui/image/upload/v1756449484/thumbnail_muhoa3jl.jpg.jpg"
-    },
-    {
-      "title": "The winds began to stir. The oceans rose in gentle anticipation. Stars shifted in the sky, aligning in a pattern that no one had seen for millennia. Something monumental was about to awaken, and the universe itself seemed to hold its breath.",
-      "author": "Alice",
-      "isLive": false,
-      "thumbnail":
-          "https://res.cloudinary.com/dtuxl8mui/image/upload/v1756449484/thumbnail_muhoa3jl.jpg.jpg"
-    },
-    
-  ];
+class _HomescreenState extends ConsumerState<Homescreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(fetchallnotifierProvider.notifier).fetchall();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    final fetchstate = ref.watch(fetchallnotifierProvider);
+    final sessions = fetchstate.sessions ?? [];
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -63,46 +52,94 @@ class _HomescreenState extends State<Homescreen> {
           ),
         ],
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(10),
-        itemCount: sessions.length,
-        itemBuilder: (context, index) {
-          final session = sessions[index];
-          return Card(
-            margin: const EdgeInsets.symmetric(vertical: 8),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: ListTile(
-              leading: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  session["thumbnail"],
-                  width: 60,
-                  height: 60,
-                  fit: BoxFit.cover,
+      body: fetchstate.loading
+          ? const Center(
+              child: SpinKitFadingFour(color: Colors.white),
+            )
+          : fetchstate.error != null
+              ? Center(child: Text(fetchstate.error!))
+              : ListView.builder(
+                  padding: const EdgeInsets.all(10),
+                  itemCount: sessions.length,
+                  itemBuilder: (context, index) {
+                    final session = sessions[index];
+                    return Card(
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: ListTile(
+                        leading: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            session.thumbnail,
+                            width: 60,
+                            height: 60,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        title: Text(session.title, style: text.bodyMedium),
+                        subtitle: Text("Author: ${session.username}"),
+                        trailing: SizedBox(
+                          width: 80,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Flexible(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: session.is_live
+                                        ? Colors.green
+                                        : Colors.grey,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Text(
+                                      session.is_live ? "LIVE" : "OFFLINE",
+                                      style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Flexible(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: session.is_chat
+                                        ? Colors.blue
+                                        : Colors.grey,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Text(
+                                      session.is_chat
+                                          ? "CHAT ENABLED"
+                                          : "CHAT OFF",
+                                      style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 10),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        onTap: () {},
+                      ),
+                    );
+                  },
                 ),
-              ),
-              title: Text(session["title"], style: text.bodyMedium),
-              subtitle: Text("Author: ${session["author"]}"),
-              trailing: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: session["isLive"] ? Colors.green : Colors.grey,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  session["isLive"] ? "LIVE" : "OFFLINE",
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                ),
-              ),
-              onTap: () {
-                // Navigate to session details if needed
-              },
-            ),
-          );
-        },
-      ),
     );
   }
 }
