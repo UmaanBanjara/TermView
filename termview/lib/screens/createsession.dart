@@ -25,7 +25,7 @@ class _CreatesessionState extends ConsumerState<Createsession> {
   final TextEditingController _desc = TextEditingController();
   bool _chatenabled = false;
   Uint8List? _selectedImage;
-
+  bool islive = true;
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
@@ -188,7 +188,8 @@ class _CreatesessionState extends ConsumerState<Createsession> {
                             enableChat: _chatenabled,
                             fileBytes: _selectedImage!,
                             fileName: fileName,
-                            token: token
+                            token: token,
+                            islive: islive
                           );
                         },
 
