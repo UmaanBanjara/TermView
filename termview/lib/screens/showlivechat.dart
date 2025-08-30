@@ -11,6 +11,20 @@ class Showlivechat extends StatefulWidget {
 
 class _ShowlivechatState extends State<Showlivechat> {
   final TextEditingController _chat = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  final List _terminalLines = [];
+
+  void _sendCommand(){
+    if(_chat.text.isNotEmpty){
+      setState(() {
+        _terminalLines.add("> ${_chat.text}");
+        _chat.clear();
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_){
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+      });
+    }
+  }
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
@@ -38,8 +52,15 @@ class _ShowlivechatState extends State<Showlivechat> {
                 width: double.infinity,
                 color: Colors.black87,
                 padding: EdgeInsets.all(8),
-                child: Center(
-                  child: Text('Chats' , style: text.bodyMedium,),
+                child: ListView.builder(
+                  controller: _scrollController,
+                  itemCount: _terminalLines.length,
+                  itemBuilder: (context , index){
+                    return Text(
+                      _terminalLines[index],
+                      style: text.bodyMedium!.copyWith(color: Colors.grey),
+                    );
+                  },
                 ),
               ),
             ),
@@ -54,11 +75,12 @@ class _ShowlivechatState extends State<Showlivechat> {
                     decoration: InputDecoration(
                       hintText: "What's on your mind",
                     ),
+                    onSubmitted: (_)=>_sendCommand(),
                   ),
                 ),
                 const SizedBox(width: 8,),
                 ElevatedButton(onPressed: (){
-        
+                  _sendCommand();
                 }, 
                 style: ElevatedButton.styleFrom(
                   textStyle: text.bodyMedium
