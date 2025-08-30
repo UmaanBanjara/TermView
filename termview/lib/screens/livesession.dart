@@ -14,9 +14,29 @@ class Livesession extends StatefulWidget {
 
 class _LivesessionState extends State<Livesession> {
   final TextEditingController _command = TextEditingController();
+  final List<String> _terminalLines = [];
+  final ScrollController _scrollController = ScrollController();
+
+  // Helper function to send command
+  void _sendCommand() {
+    if (_command.text.isNotEmpty) {
+      setState(() {
+        _terminalLines.add("> ${_command.text}");
+        _command.clear();
+      });
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scrollController.hasClients) {
+          _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+        }
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -26,9 +46,8 @@ class _LivesessionState extends State<Livesession> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Session Title" , style: text.bodyLarge,),
-            Text("host username" , style: text.bodyMedium,),
-            
+            Text("Session Title", style: text.bodyLarge),
+            Text("host username", style: text.bodyMedium),
           ],
         ),
         actions: [
@@ -36,9 +55,7 @@ class _LivesessionState extends State<Livesession> {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             child: ElevatedButton(
               onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                textStyle: text.bodyMedium,
-              ),
+              style: ElevatedButton.styleFrom(textStyle: text.bodyMedium),
               child: const Text("10 Joined"),
             ),
           ),
@@ -46,9 +63,7 @@ class _LivesessionState extends State<Livesession> {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             child: ElevatedButton(
               onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                textStyle: text.bodyMedium,
-              ),
+              style: ElevatedButton.styleFrom(textStyle: text.bodyMedium),
               child: const Text("Share Session"),
             ),
           ),
@@ -58,9 +73,7 @@ class _LivesessionState extends State<Livesession> {
               onPressed: () {
                 navigate(context, Createquiz());
               },
-              style: ElevatedButton.styleFrom(
-                textStyle: text.bodyMedium,
-              ),
+              style: ElevatedButton.styleFrom(textStyle: text.bodyMedium),
               child: const Text("Create Quiz"),
             ),
           ),
@@ -70,9 +83,7 @@ class _LivesessionState extends State<Livesession> {
               onPressed: () {
                 navigate(context, Showlivechat());
               },
-              style: ElevatedButton.styleFrom(
-                textStyle: text.bodyMedium,
-              ),
+              style: ElevatedButton.styleFrom(textStyle: text.bodyMedium),
               child: const Text("Chats"),
             ),
           ),
@@ -80,23 +91,19 @@ class _LivesessionState extends State<Livesession> {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             child: ElevatedButton(
               onPressed: () {
-                endsession(context, onConfirm: (){
-                  showTerminalSnackbar(context, 'Session ended' , isError: false); 
+                endsession(context, onConfirm: () {
+                  showTerminalSnackbar(context, 'Session ended', isError: false);
                 });
               },
               style: ElevatedButton.styleFrom(
-                textStyle: text.bodyMedium,
-                backgroundColor: Colors.red,
-              ),
+                  textStyle: text.bodyMedium, backgroundColor: Colors.red),
               child: const Text("End Session"),
             ),
           ),
         ],
-        
       ),
-
       body: Padding(
-        padding: EdgeInsets.all(8),
+        padding: const EdgeInsets.all(8),
         child: Column(
           children: [
             Expanded(
@@ -105,12 +112,20 @@ class _LivesessionState extends State<Livesession> {
                 width: double.infinity,
                 color: Colors.black87,
                 padding: const EdgeInsets.all(8),
-                child: Center(
-                  child: Text("Terminal Commands" , style: text.bodyMedium,),
+                child: ListView.builder(
+                  controller: _scrollController,
+                  itemCount: _terminalLines.length,
+                  itemBuilder: (context, index) {
+                    return Text(
+                      _terminalLines[index],
+                      style: text.bodyMedium!
+                          .copyWith(color: Colors.greenAccent),
+                    );
+                  },
                 ),
               ),
             ),
-            const SizedBox(height: 10,),
+            const SizedBox(height: 10),
             Row(
               children: [
                 Expanded(
@@ -118,19 +133,19 @@ class _LivesessionState extends State<Livesession> {
                     controller: _command,
                     cursorHeight: 22,
                     style: text.bodyMedium,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       hintText: "Enter commands",
                     ),
+                    onSubmitted: (_) => _sendCommand(), // <-- Enter key
                   ),
                 ),
-                const SizedBox(width: 8,),
-                ElevatedButton(onPressed: (){
-        
-                }, 
-                style: ElevatedButton.styleFrom(
-                  textStyle: text.bodyMedium
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: _sendCommand, // <-- Send button
+                  style:
+                      ElevatedButton.styleFrom(textStyle: text.bodyMedium),
+                  child: const Text('Send'),
                 )
-                ,child: Text('Send'))
               ],
             )
           ],
