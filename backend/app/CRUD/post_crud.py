@@ -2,16 +2,16 @@ from sqlalchemy.orm import Session
 from app.models.live import Live
 from app.testdb.db import SessionLocal
 
-#function to create a new post
-def create_post(title : str , desc : str , enable_chat : bool , thumbnail_url , user_id : str):
+def create_post(title: str, desc: str, thumbnail_url: str, user_id: int, is_live: bool, is_chat: bool):
     db:Session = SessionLocal()
     try:
         new_post = Live(
-            title = title,
-            desc = desc,
-            thumb = thumbnail_url,
-            is_live = enable_chat,
-            user_id = user_id
+            title=title,
+            desc=desc,
+            thumb=thumbnail_url,
+            is_live=is_live,
+            is_chat=is_chat,
+            user_id=user_id
         )
         db.add(new_post)
         db.commit()
@@ -19,6 +19,4 @@ def create_post(title : str , desc : str , enable_chat : bool , thumbnail_url , 
         return new_post
     except Exception as e:
         db.rollback()
-        raise e
-    finally:
-        db.close()
+        raise
