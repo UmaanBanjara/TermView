@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:termview/screens/deleteacc/deleteacc.dart';
 import 'package:termview/screens/forgotpass/resetpass.dart';
+import 'package:termview/screens/loginscreen.dart';
 import 'package:termview/widgets/page_transition.dart';
+import 'package:termview/widgets/snackbar.dart';
 
 class Settings extends StatefulWidget {
   const Settings({super.key});
@@ -11,6 +14,7 @@ class Settings extends StatefulWidget {
 }
 
 class _SettingsState extends State<Settings> {
+  final FlutterSecureStorage _storage = FlutterSecureStorage();
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
@@ -43,12 +47,19 @@ class _SettingsState extends State<Settings> {
                 title: Text("Delete Account" , style: text.bodyMedium,),
               ),
               ListTile(
-                onTap: (){
-                  
-                },
-                leading: Icon(Icons.logout),
-                title: Text("Logout" , style: text.bodyMedium,),
-              ),
+              onTap: () async {
+                await _storage.delete(key: 'access_token');
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (_) => Loginscreen()),
+                  (route) => false,
+                );
+                showTerminalSnackbar(context, 'Logout Successful');
+              },
+              leading: Icon(Icons.logout),
+              title: Text("Logout", style: text.bodyMedium,),
+            ),
+
             ],
           ),
         ),
