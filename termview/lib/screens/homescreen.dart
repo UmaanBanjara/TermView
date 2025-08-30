@@ -58,88 +58,99 @@ class _HomescreenState extends ConsumerState<Homescreen> {
             )
           : fetchstate.error != null
               ? Center(child: Text(fetchstate.error!))
-              : ListView.builder(
-                  padding: const EdgeInsets.all(10),
-                  itemCount: sessions.length,
-                  itemBuilder: (context, index) {
-                    final session = sessions[index];
-                    return Card(
-                      margin: const EdgeInsets.symmetric(vertical: 8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: ListTile(
-                        leading: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            session.thumbnail,
-                            width: 60,
-                            height: 60,
-                            fit: BoxFit.cover,
-                          ),
+              : sessions.where((s) => s.is_live).isEmpty
+                  ? const Center(
+                      child: Text(
+                        "NO LIVE SESSIONS CURRENTLY",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
                         ),
-                        title: Text(session.title, style: text.bodyMedium),
-                        subtitle: Text("Author: ${session.username}"),
-                        trailing: SizedBox(
-                          width: 80,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Flexible(
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: session.is_live
-                                        ? Colors.green
-                                        : Colors.grey,
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: FittedBox(
-                                    fit: BoxFit.scaleDown,
-                                    child: Text(
-                                      session.is_live ? "LIVE" : "OFFLINE",
-                                      style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold),
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(10),
+                      itemCount: sessions.length,
+                      itemBuilder: (context, index) {
+                        final session = sessions[index];
+                        return Card(
+                          margin: const EdgeInsets.symmetric(vertical: 8),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: ListTile(
+                            leading: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.network(
+                                session.thumbnail,
+                                width: 60,
+                                height: 60,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            title: Text(session.title, style: text.bodyMedium),
+                            subtitle: Text("Author: ${session.username}"),
+                            trailing: SizedBox(
+                              width: 80,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Flexible(
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: session.is_live
+                                            ? Colors.green
+                                            : Colors.grey,
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child: Text(
+                                          session.is_live ? "LIVE" : "OFFLINE",
+                                          style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Flexible(
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: session.is_chat
-                                        ? Colors.blue
-                                        : Colors.grey,
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: FittedBox(
-                                    fit: BoxFit.scaleDown,
-                                    child: Text(
-                                      session.is_chat
-                                          ? "CHAT ENABLED"
-                                          : "CHAT OFF",
-                                      style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 10),
+                                  const SizedBox(height: 4),
+                                  Flexible(
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: session.is_chat
+                                            ? Colors.blue
+                                            : Colors.grey,
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child: Text(
+                                          session.is_chat
+                                              ? "CHAT ENABLED"
+                                              : "CHAT OFF",
+                                          style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 10),
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
+                                ],
                               ),
-                            ],
+                            ),
+                            onTap: () {},
                           ),
-                        ),
-                        onTap: () {},
-                      ),
-                    );
-                  },
-                ),
+                        );
+                      },
+                    ),
     );
   }
 }
