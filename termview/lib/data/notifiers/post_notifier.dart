@@ -38,12 +38,13 @@ class PostNotifier extends StateNotifier<PostState>{
     required Uint8List fileBytes,
     required String fileName,
     required bool enableChat,
+    required bool islive,
     required String token,
   })async{
     state = state.copyWith(loading: true , error: null , message: null);
 
     try{
-      final result = await repository.post(title: title, desc: desc, fileBytes: fileBytes, fileName: fileName,enableChat: enableChat , token: token);
+      final result = await repository.post(title: title, desc: desc, fileBytes: fileBytes, fileName: fileName,enableChat: enableChat , islive: islive,token: token);
       state = state.copyWith(
         loading: false, 
         message: result['message'] ?? "Post uploaded successfully",
