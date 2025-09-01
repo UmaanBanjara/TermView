@@ -7,22 +7,38 @@ class PostState{
   final bool loading;
   final String? message;
   final String? error;
+  final String? postId;
+  final String? title;
+  final String? description;
+  final String? link;
 
   PostState({
     this.loading = false,
     this.message,
     this.error,
+    this.postId,
+    this.title,
+    this.description,
+    this.link
   }); 
 
   PostState copyWith({
     bool? loading,
     String? message,
     String? error,
+    String? postId,
+    String? title,
+    String? description,
+    String? link,
   }){
     return PostState(
       loading: loading ?? this.loading,
       message: message ?? this.message,
-      error: error ?? this.error
+      error: error ?? this.error,
+      postId: postId ?? this.postId,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      link: link ?? this.link
     );
   }
 }
@@ -48,6 +64,11 @@ class PostNotifier extends StateNotifier<PostState>{
       state = state.copyWith(
         loading: false, 
         message: result['message'] ?? "Post uploaded successfully",
+        postId: result['post_id'].toString(),
+        title: result['title'] ?? "Can't get title",
+        description: result['desc'] ?? "Can't get description",
+        link: result['link'] ?? "Can't get link"
+
         
       );
     }catch(e){
