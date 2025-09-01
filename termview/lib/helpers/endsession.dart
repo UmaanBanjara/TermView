@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-Future<void> endsession(BuildContext context , {required VoidCallback onConfirm}) async{
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:termview/data/providers/endsession_provider.dart';
+Future<void> endsession(BuildContext context , WidgetRef ref , String sessionId) async{
   final text = Theme.of(context).textTheme;
   await showDialog(context: context, builder: (context){
     return AlertDialog(
@@ -11,7 +13,8 @@ Future<void> endsession(BuildContext context , {required VoidCallback onConfirm}
         }, child: const Text('Cancel' )),
         ElevatedButton(onPressed: (){
           Navigator.pop(context);
-          onConfirm();
+          ref.read(endsessionnotifierProvider.notifier).endsession(id: sessionId);
+          
         }, 
         style: ElevatedButton.styleFrom(
           textStyle: text.bodyMedium
