@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:termview/data/providers/fetchall_provider.dart';
+import 'package:termview/helpers/join.dart';
 import 'package:termview/screens/createsession.dart';
 import 'package:termview/screens/settings.dart';
 import 'package:termview/widgets/page_transition.dart';
@@ -146,7 +147,9 @@ class _HomescreenState extends ConsumerState<Homescreen> {
                                 ],
                               ),
                             ),
-                            onTap: () {},
+                            onTap: () {
+                              joinsession(context, onConfirm: (){});
+                            },
                           ),
                         );
                       },
