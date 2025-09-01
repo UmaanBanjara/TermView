@@ -2,6 +2,12 @@ from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Header
 from app.CRUD.post_crud import create_post
 from app.utils.cloudinary import upload_to_cloudinary
 from app.utils.current_user import get_user_id_from_token
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+FRONTEND_URL= os.getenv("FRONTEND_URL")
 
 router = APIRouter()
 
@@ -38,8 +44,11 @@ async def upload_thumbnail(
         thumbnail_url=url,
         is_live=is_live,
         is_chat=is_chat,
-        user_id=user_id
+        user_id=user_id,
     )
+
+    #generating dynamic links using session_id from DB
+    dynamic_link = f"{FRONTEND_URL}/live?session_id={new_post.session_id}"
 
     return {
         "success": True,
@@ -48,4 +57,5 @@ async def upload_thumbnail(
         "title": new_post.title,
         "desc": new_post.desc,
         "enable_chat": new_post.is_chat,
+        "link" : dynamic_link
     }
