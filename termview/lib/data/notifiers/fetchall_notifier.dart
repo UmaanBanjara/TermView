@@ -43,7 +43,7 @@ class FetchallNotifier extends StateNotifier<FetchallState>{
     state = state.copyWith(
       loading: false,
       sessions: sessions,
-      message: 'Live sessions fetched successully'
+      message: sessions.isEmpty ? 'No Live Sessions Available' : 'Live Sessions Fetched Successfully'
     );
     }
     catch(e){
