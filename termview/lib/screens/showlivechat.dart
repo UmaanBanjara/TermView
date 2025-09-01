@@ -10,6 +10,7 @@ class Showlivechat extends StatefulWidget {
 }
 
 class _ShowlivechatState extends State<Showlivechat> {
+  final FocusNode _chatfocus = FocusNode();
   final TextEditingController _chat = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final List _terminalLines = [];
@@ -19,6 +20,7 @@ class _ShowlivechatState extends State<Showlivechat> {
       setState(() {
         _terminalLines.add("> ${_chat.text}");
         _chat.clear();
+        _chatfocus.requestFocus();
       });
       WidgetsBinding.instance.addPostFrameCallback((_){
         _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
@@ -58,7 +60,7 @@ class _ShowlivechatState extends State<Showlivechat> {
                   itemBuilder: (context , index){
                     return Text(
                       _terminalLines[index],
-                      style: text.bodyMedium!.copyWith(color: Colors.grey),
+                      style: text.bodyMedium!.copyWith(color: Colors.greenAccent),
                     );
                   },
                 ),
@@ -71,6 +73,7 @@ class _ShowlivechatState extends State<Showlivechat> {
                   child: TextField(
                     controller: _chat,
                     cursorHeight: 22,
+                    focusNode: _chatfocus,
                     style: text.bodyMedium,
                     decoration: InputDecoration(
                       hintText: "What's on your mind",
