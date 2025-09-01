@@ -26,19 +26,26 @@ class _CreatesessionState extends ConsumerState<Createsession> {
   bool _chatenabled = false;
   Uint8List? _selectedImage;
   bool islive = true;
+
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final poststate = ref.watch(PostnotiferProvider);
 
-    ref.listen<PostState>(PostnotiferProvider , (previous , next){
-      if(next.message != null && next.message != previous?.message){
-        showTerminalSnackbar(context, next.message! , isError: false);
-        navigate(context, Livesession());
-      }
-      else if (next.error != null && next.error != previous?.error){
-        WidgetsBinding.instance.addPostFrameCallback((_){
-          showTerminalSnackbar(context, next.error! , isError: true);
+    ref.listen<PostState>(PostnotiferProvider, (previous, next) {
+      if (next.message != null && next.message != previous?.message) {
+        showTerminalSnackbar(context, next.message!, isError: false);
+        navigate(
+            context,
+            Livesession(
+              postId: next.postId!,
+              title: next.title!,
+              description: next.description!,
+              link: next.link!,
+            ));
+      } else if (next.error != null && next.error != previous?.error) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          showTerminalSnackbar(context, next.error!, isError: true);
           return;
         });
       }
@@ -49,7 +56,7 @@ class _CreatesessionState extends ConsumerState<Createsession> {
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         centerTitle: false,
         leading: BackButton(),
-        title:Text('Create New Session', style: text.bodyLarge),
+        title: Text('Create New Session', style: text.bodyLarge),
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(8),
@@ -166,39 +173,51 @@ class _CreatesessionState extends ConsumerState<Createsession> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: 
-                    poststate.loading ? Center(child : SpinKitFadingFour(color: Colors.white,))
-                    :
-                    ElevatedButton(
-                      onPressed: () async {
-                          if (!_formKey.currentState!.validate()) {
-                            showTerminalSnackbar(context, 'Failed to create session. Please try again', isError: true);
-                            return;
-                          }
-                          final token = await ref.read(LoginnotifierProvider.notifier).getToken();
-                          if(token == null){
-                            showTerminalSnackbar(context, "User not logged in", isError: true);
-                            return;
-                          }
+                    child: poststate.loading
+                        ? Center(
+                            child:
+                                SpinKitFadingFour(color: Colors.white),
+                          )
+                        : ElevatedButton(
+                            onPressed: () async {
+                              if (!_formKey.currentState!.validate()) {
+                                showTerminalSnackbar(context,
+                                    'Failed to create session. Please try again',
+                                    isError: true);
+                                return;
+                              }
+                              if (_selectedImage == null) {
+                                showTerminalSnackbar(context,
+                                    "No thumbnail selected", isError: true);
+                                return;
+                              }
 
-                          String fileName = generateRandomFileName();
-                          ref.read(PostnotiferProvider.notifier).post(
-                            title: _title.text,
-                            desc: _desc.text,
-                            enableChat: _chatenabled,
-                            fileBytes: _selectedImage!,
-                            fileName: fileName,
-                            token: token,
-                            islive: islive
-                          );
-                        },
+                              final token = await ref
+                                  .read(LoginnotifierProvider.notifier)
+                                  .getToken();
+                              if (token == null) {
+                                showTerminalSnackbar(context,
+                                    "User not logged in", isError: true);
+                                return;
+                              }
 
-                      style: ElevatedButton.styleFrom(
-                        textStyle: text.bodyMedium,
-                        minimumSize: Size(0, 50),
-                      ),
-                      child: Text('Start Session'),
-                    ),
+                              String fileName = generateRandomFileName();
+                              ref.read(PostnotiferProvider.notifier).post(
+                                    title: _title.text,
+                                    desc: _desc.text,
+                                    enableChat: _chatenabled,
+                                    fileBytes: _selectedImage!,
+                                    fileName: fileName,
+                                    token: token,
+                                    islive: islive,
+                                  );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              textStyle: text.bodyMedium,
+                              minimumSize: Size(0, 50),
+                            ),
+                            child: Text('Start Session'),
+                          ),
                   ),
                   SizedBox(width: 20),
                   Expanded(
