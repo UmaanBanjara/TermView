@@ -11,7 +11,7 @@ class FetchallRepository {
 
     if(response.statusCode == 200){
       final data = jsonDecode(response.body);
-      final session = data['sessions'] as List;
+      final session = (data['sessions'] as List?) ?? [];
       return session.map((json) => LiveModel.fromJson(json)).toList();
 
     }
