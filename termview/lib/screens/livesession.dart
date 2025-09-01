@@ -1,28 +1,39 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:termview/data/notifiers/endsession_notifier.dart';
+import 'package:termview/data/providers/endsession_provider.dart';
 import 'package:termview/helpers/endsession.dart';
+import 'package:termview/helpers/sharesession.dart';
 import 'package:termview/screens/createquiz.dart';
+import 'package:termview/screens/homescreen.dart';
 import 'package:termview/screens/showlivechat.dart';
 import 'package:termview/widgets/page_transition.dart';
 import 'package:termview/widgets/snackbar.dart';
 
-class Livesession extends StatefulWidget {
-  const Livesession({super.key});
+class Livesession extends ConsumerStatefulWidget {
+  String? postId;
+  String? title;
+  String? description;
+  String? link;
+  Livesession({this.postId,this.title,this.description,this.link,super.key});
 
   @override
-  State<Livesession> createState() => _LivesessionState();
+  ConsumerState<Livesession> createState() => _LivesessionState();
 }
 
-class _LivesessionState extends State<Livesession> {
+class _LivesessionState extends ConsumerState<Livesession> {
   final TextEditingController _command = TextEditingController();
+  final FocusNode _terminalfocus = FocusNode();
   final List<String> _terminalLines = [];
   final ScrollController _scrollController = ScrollController();
 
-  // Helper function to send command
+
   void _sendCommand() {
     if (_command.text.isNotEmpty) {
       setState(() {
         _terminalLines.add("> ${_command.text}");
         _command.clear();
+        _terminalfocus.requestFocus();
       });
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -36,6 +47,16 @@ class _LivesessionState extends State<Livesession> {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    final endstate = ref.watch(endsessionnotifierProvider);
+    ref.listen<EndState>(endsessionnotifierProvider , (previous , next){
+      if(next.message != null && next.message != previous?.message){
+        showTerminalSnackbar(context, next.message! , isError: false);
+        navigate(context, Homescreen());
+      }
+      else if(next.error != null && next.error != previous?.error){
+        showTerminalSnackbar(context, next.error! , isError: true);
+      }
+    });
 
     return Scaffold(
       appBar: AppBar(
@@ -44,62 +65,75 @@ class _LivesessionState extends State<Livesession> {
         titleSpacing: 0,
         centerTitle: false,
         title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("Session Title", style: text.bodyLarge),
-            Text("host username", style: text.bodyMedium),
-          ],
-        ),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min, 
+        children: [
+          Text(
+            widget.title ?? "Can't get title",
+            style: text.bodyLarge,
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+          ),
+          Text(
+            widget.description ?? "Can't get description",
+            style: text.bodyMedium,
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+          ),
+        ],
+      ),
         actions: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            child: ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(textStyle: text.bodyMedium),
-              child: const Text("10 Joined"),
+            padding: const EdgeInsets.symmetric(horizontal: 8 , vertical: 8),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: [
+            ElevatedButton(
+            onPressed: () {},
+            style: ElevatedButton.styleFrom(textStyle: text.bodyMedium),
+            child: const Text("10 Joined"),
+                      ),
+                      ElevatedButton(
+            onPressed: () {
+              if(widget.link != null){
+              sharesession(context, link: widget.link!);
+            }
+            else{
+              showTerminalSnackbar(context, "No link available" , isError: false);
+            }},
+            style: ElevatedButton.styleFrom(textStyle: text.bodyMedium),
+            child: const Text("Share Session"),
+                      ),
+                      ElevatedButton(
+            onPressed: () {
+              navigate(context, Createquiz());
+            },
+            style: ElevatedButton.styleFrom(textStyle: text.bodyMedium),
+            child: const Text("Create Quiz"),
+                      ),
+                      ElevatedButton(
+            onPressed: () {
+              navigate(context, Showlivechat());
+            },
+            style: ElevatedButton.styleFrom(textStyle: text.bodyMedium),
+            child: const Text("Chats"),
+                      ),
+                      ElevatedButton(
+            onPressed: () {
+              if(widget.postId != null){
+              endsession(context, ref, widget.postId!);
+                      
+              }
+            },
+            style: ElevatedButton.styleFrom(
+                textStyle: text.bodyMedium, backgroundColor: Colors.red),
+            child: const Text("End Session"),
+                      ),
+              ],
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            child: ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(textStyle: text.bodyMedium),
-              child: const Text("Share Session"),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            child: ElevatedButton(
-              onPressed: () {
-                navigate(context, Createquiz());
-              },
-              style: ElevatedButton.styleFrom(textStyle: text.bodyMedium),
-              child: const Text("Create Quiz"),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            child: ElevatedButton(
-              onPressed: () {
-                navigate(context, Showlivechat());
-              },
-              style: ElevatedButton.styleFrom(textStyle: text.bodyMedium),
-              child: const Text("Chats"),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            child: ElevatedButton(
-              onPressed: () {
-                endsession(context, onConfirm: () {
-                  showTerminalSnackbar(context, 'Session ended', isError: false);
-                });
-              },
-              style: ElevatedButton.styleFrom(
-                  textStyle: text.bodyMedium, backgroundColor: Colors.red),
-              child: const Text("End Session"),
-            ),
-          ),
+          )
+          
         ],
       ),
       body: Padding(
@@ -133,6 +167,7 @@ class _LivesessionState extends State<Livesession> {
                     controller: _command,
                     cursorHeight: 22,
                     style: text.bodyMedium,
+                    focusNode: _terminalfocus,
                     decoration: const InputDecoration(
                       hintText: "Enter commands",
                     ),
