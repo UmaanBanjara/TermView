@@ -8,7 +8,7 @@ router = APIRouter()
 def fetch_all():
     result = check_live()
     if not result:
-        raise HTTPException(status_code=401 , detail="Nothing to show here")
+       return {"message" : "Nothing to show here"}
     
     #returns list of object not individual list so we have to convert it to dict
 
@@ -19,6 +19,5 @@ def fetch_all():
     ]
 
     return{
-        "message" : "There are live sessions",
         "sessions" :live_sessions
     }
