@@ -11,7 +11,7 @@ def create_post(title: str, desc: str, thumbnail_url: str, user_id: int, is_live
             thumb=thumbnail_url,
             is_live=is_live,
             is_chat=is_chat,
-            user_id=user_id
+            user_id=user_id,
         )
         db.add(new_post)
         db.commit()
