@@ -8,7 +8,8 @@ def check_live():
     try:
         return db.query(Live).options(joinedload(Live.user)).filter(Live.is_live == True).all()
     except Exception as e:
-        return {"error" : str(e)}
+        print("Database error : ",e)
+        return []
     finally:
         db.close()
     
