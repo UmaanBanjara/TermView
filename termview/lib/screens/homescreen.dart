@@ -60,14 +60,10 @@ class _HomescreenState extends ConsumerState<Homescreen> {
           : fetchstate.error != null
               ? Center(child: Text(fetchstate.error!))
               : sessions.where((s) => s.is_live).isEmpty
-                  ? const Center(
+                  ?  Center(
                       child: Text(
                         "NO LIVE SESSIONS CURRENTLY",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: text.bodyMedium,
                       ),
                     )
                   : ListView.builder(
