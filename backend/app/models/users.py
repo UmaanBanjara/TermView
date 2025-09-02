@@ -17,3 +17,7 @@ class User(Base):
 
     #relationship with quiz
     quizzes = relationship("Quiz" , back_populates="user" , cascade="all, delete-orphan")
+
+    #relationship with chat
+
+    chats = relationship("Chat" , back_populates="user" , cascade="all, delete-orphan")
