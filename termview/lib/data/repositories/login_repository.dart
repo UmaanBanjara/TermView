@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 
 
 class LoginRepository {
-  final String baseUrl = 'http://192.168.1.6:8000';
+  final String baseUrl = 'https://termview.onrender.com';
 
   Future<Map<String , dynamic>> login({
     required String email,

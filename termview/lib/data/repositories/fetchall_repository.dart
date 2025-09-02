@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:termview/models/live_model.dart';
 
 class FetchallRepository {
-  final String baseUrl = 'http://192.168.1.6:8000';
+  final String baseUrl = 'https://termview.onrender.com';
 
   Future<List<LiveModel>> fetchall()async{
     final response = await http.get(Uri.parse('$baseUrl/fetch/fetchall'));
