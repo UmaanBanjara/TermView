@@ -24,7 +24,7 @@ class LiveSessionState{
     );
   }
 }
-class LiveSessionNotifier extends StateNotifier<LiveSessionState>{
+class LiveSessionNotifier extends StateNotifier<LiveSessionState>{ //statenotifier for livesession
   final LiveSessionRepository repository;
 
   LiveSessionNotifier(this.repository) : super(LiveSessionState());
