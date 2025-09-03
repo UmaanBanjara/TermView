@@ -15,7 +15,7 @@ class User(Base):
     #relationship to live
     lives = relationship("Live" , back_populates="user" , cascade="all, delete-orphan")
 
-    #relationship with quiz
+    #relationship with quizz
     quizzes = relationship("Quiz" , back_populates="user" , cascade="all, delete-orphan")
 
     #relationship with chat
