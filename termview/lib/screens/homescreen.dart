@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:termview/data/providers/fetchall_provider.dart';
 import 'package:termview/data/providers/live_session_provider.dart';
+import 'package:termview/helpers/join.dart';
 import 'package:termview/screens/createsession.dart';
 import 'package:termview/screens/joinedsession.dart';
 import 'package:termview/screens/settings.dart';
@@ -146,14 +147,13 @@ class _HomescreenState extends ConsumerState<Homescreen> {
                               ),
                             ),
                             onTap: ()async {
-                              // if connection is made then navigate to joined sessoin page or else thrown an error
+                              // if connection is meade then navigate to joined sessoin page or else thrown an error
+                              if(session.session_id.isEmpty){
+                                showTerminalSnackbar(context, "SessionID not found. Please try again" , isError: true);
 
-                              final result = await ref.read(livesessionnotifierProvider.notifier).live_session(session_id: session.session_id);
-                              if(result){
-                                navigate(context, Joinesesion());
                               }
                               else{
-                                showTerminalSnackbar(context, "Connection Failed. Please try again" , isError: true);
+                                joinsession(context, ref, session.session_id);
                               }
                             },
                           ),
