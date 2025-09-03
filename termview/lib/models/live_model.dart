@@ -19,7 +19,7 @@ class LiveModel {
     required this.session_id
   });
 
-  factory LiveModel.fromJson(Map<String,dynamic> json){
+  factory LiveModel.fromJson(Map<String,dynamic> json){ //factory
     return LiveModel(
       postId: json['id'] as int,
       thumbnail: json['thumb'] ?? '',
