@@ -25,7 +25,7 @@ class Live(Base):
 
     commands = relationship("Command" , back_populates="session" , cascade="all, delete-orphan")
 
-    #relationship to chats
+    #relationship to chatss
 
     chats= relationship("Chat" , back_populates="session" , cascade="all, delete-orphan")
 
