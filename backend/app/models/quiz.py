@@ -15,7 +15,7 @@ class Quiz(Base):
     ans = Column(String , nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow , nullable=False)
 
-    #foreign key to user table
+    #foreign key to user tablew
     user_id = Column(Integer, ForeignKey("users.id") , nullable=False)
 
     #relationship with user
