@@ -1,0 +1,49 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:termview/data/repositories/live_session_repository.dart';
+
+class LiveSessionState{
+  final bool loading;
+  final String? error;
+  final String? message;
+
+  LiveSessionState({
+    this.loading = false,
+    this.error,
+    this.message
+  });
+
+  LiveSessionState copyWith({
+    bool? loading,
+    String? error,
+    String? message
+  }){
+    return LiveSessionState(
+      loading: loading ?? this.loading,
+      error: error ?? this.error,
+      message: message ?? this.message
+    );
+  }
+}
+class LiveSessionNotifier extends StateNotifier<LiveSessionState>{
+  final LiveSessionRepository repository;
+
+  LiveSessionNotifier(this.repository) : super(LiveSessionState());
+
+  Future<bool> live_session({
+    required String session_id,
+  })async{
+    state = state.copyWith(loading: true , error: null);
+    try{
+      await repository.connect(session_id);
+      state = state.copyWith(loading: false ,message : "Connection made successfully" );
+      return true;
+    }
+    catch(e){
+      state = state.copyWith(
+        loading: false,
+        error: "Failed to make connection"
+      );
+      return false;
+    }
+  }
+}

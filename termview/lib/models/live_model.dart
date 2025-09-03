@@ -6,6 +6,7 @@ class LiveModel {
   final bool is_live;
   final bool is_chat;
   final String? username;
+  final String session_id;
 
   LiveModel({
     required this.postId,
@@ -15,6 +16,7 @@ class LiveModel {
     required this.is_live,
     required this.is_chat,
     this.username,
+    required this.session_id
   });
 
   factory LiveModel.fromJson(Map<String,dynamic> json){
@@ -25,7 +27,8 @@ class LiveModel {
       desc: json['desc'],
       is_live: json['is_live'],
       is_chat: json['is_chat'],
-      username : json['user_id']
+      username : json['user_id'],
+      session_id: json['session_id']
 
     );
   }
@@ -37,7 +40,8 @@ class LiveModel {
       'desc' : desc,
       'is_live' : is_live,
       'is_chat' : is_chat,
-      'user_id' : username
+      'user_id' : username,
+      'session_id' : session_id
     };
   }
 }

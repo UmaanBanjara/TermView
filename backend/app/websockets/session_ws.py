@@ -3,9 +3,6 @@ from typing import List
 
 router = APIRouter()
 
-#keeps track of connected clientes per session
-active_connection = dict[str, List[WebSocket]] = {}
-
 class ConnectionManager:
     def __init__(self):
         self.connections : dict[str , List[WebSocket]] = {}

@@ -26,6 +26,7 @@ class SignupRepository {
       })
     );
     if(reponse.statusCode == 200){
+      print("${reponse.body}");
       return jsonDecode(reponse.body);
     }else{
       throw Exception(jsonDecode(reponse.body)['detail']??"Something went wrong");

@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:termview/data/providers/fetchall_provider.dart';
-import 'package:termview/helpers/join.dart';
+import 'package:termview/data/providers/live_session_provider.dart';
 import 'package:termview/screens/createsession.dart';
+import 'package:termview/screens/joinedsession.dart';
 import 'package:termview/screens/settings.dart';
 import 'package:termview/widgets/page_transition.dart';
+import 'package:termview/widgets/snackbar.dart';
 
 class Homescreen extends ConsumerStatefulWidget {
   const Homescreen({super.key});
@@ -143,8 +145,16 @@ class _HomescreenState extends ConsumerState<Homescreen> {
                                 ],
                               ),
                             ),
-                            onTap: () {
-                              joinsession(context, onConfirm: (){});
+                            onTap: ()async {
+                              // if connection is made then navigate to joined sessoin page or else thrown an error
+
+                              final result = await ref.read(livesessionnotifierProvider.notifier).live_session(session_id: session.session_id);
+                              if(result){
+                                navigate(context, Joinesesion());
+                              }
+                              else{
+                                showTerminalSnackbar(context, "Connection Failed. Please try again" , isError: true);
+                              }
                             },
                           ),
                         );
