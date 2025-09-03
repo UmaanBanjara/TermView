@@ -10,3 +10,5 @@ final livesessionnotifierProvider = StateNotifierProvider<LiveSessionNotifier , 
   final repository = ref.watch(livesessionrepositoryProvider);
   return LiveSessionNotifier(repository);
 });
+
+//provider for livesession
