@@ -17,7 +17,7 @@ cloudinary.config(
     secure = True
 )
 
-#function to upload to cloudinary
+#function to upload to cloudinaryy
 async def upload_to_cloudinary(file : UploadFile):
     try:
         result = cloudinary.uploader.upload(file.file , public_id=file.filename , overwrite=False)
