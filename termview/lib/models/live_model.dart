@@ -21,14 +21,14 @@ class LiveModel {
 
   factory LiveModel.fromJson(Map<String,dynamic> json){
     return LiveModel(
-      postId: json['id'],
-      thumbnail: json['thumb'],
-      title: json['title'],
-      desc: json['desc'],
-      is_live: json['is_live'],
-      is_chat: json['is_chat'],
-      username : json['user_id'],
-      session_id: json['session_id']
+      postId: json['id'] as int,
+      thumbnail: json['thumb'] ?? '',
+      title: json['title'] ?? '',
+      desc: json['desc'] ?? '',
+      is_live: json['is_live'] as bool? ?? false,
+      is_chat: json['is_chat'] as bool? ?? false,
+      username : json['user_id'] as String?,
+      session_id: json['session_id'] ?? '',
 
     );
   }
