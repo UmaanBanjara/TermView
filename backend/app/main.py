@@ -8,6 +8,7 @@ from app.routes.auth import deleteacc_auth
 from app.routes.auth import quiz_auth
 from app.routes.auth import fetchall_auth
 from app.routes.auth import endsession_auth
+from app.websockets.session_ws import session_ws
 
 app = FastAPI(title = "TermView API")
 
@@ -28,6 +29,7 @@ app.include_router(deleteacc_auth.router , prefix="/auth" , tags=["Delete Accoun
 app.include_router(quiz_auth.router , prefix="/quiz" , tags=["Quiz"])
 app.include_router(fetchall_auth.router , prefix="/fetch" , tags=["Fetch all Live"])
 app.include_router(endsession_auth.router , prefix="/end" , tags=["End Session"])
+app.include_router(session_ws.router , prefix="/websocket" , tags=["Web Socket"])
 
 #root endpoint
 @app.get("/")
