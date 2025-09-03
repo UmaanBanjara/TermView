@@ -31,7 +31,7 @@ app.include_router(fetchall_auth.router , prefix="/fetch" , tags=["Fetch all Liv
 app.include_router(endsession_auth.router , prefix="/end" , tags=["End Session"])
 app.include_router(router, prefix="/websocket" , tags=["Web Socket"])
 
-#root endpoint
+#root endpointt
 @app.get("/")
 async def root():
     return{
