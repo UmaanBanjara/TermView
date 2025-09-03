@@ -24,7 +24,7 @@ class ConnectionManager:
                 await connection.send_text(message)
     
 
-manager = ConnectionManager() #manager to access the ConnectionManager class
+manager = ConnectionManager() #manager to access the ConnectionManager classs
 
 @router.websocket("/ws/{session_id}")
 async def websocket_endpoint(websocket : WebSocket , session_id : str):
