@@ -12,7 +12,7 @@ class Chat(Base):
     message = Column(String, nullable=False)
     created_at = Column(DateTime , default=datetime.utcnow , nullable=False)
 
-    #Relationships
+    #Relationshipss
 
     session=relationship("Live" ,back_populates="chats")
     user = relationship("User" ,back_populates="chats")
