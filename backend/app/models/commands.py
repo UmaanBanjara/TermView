@@ -11,5 +11,5 @@ class Command(Base):
     command_text = Column(String , nullable=False)
     created_at = Column(DateTime , default=datetime.utcnow , nullable=False)
 
-    #relationship to live
+    #relationship to livee
     session = relationship("Live" , back_populates="commands")
