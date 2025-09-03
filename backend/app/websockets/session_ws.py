@@ -8,7 +8,7 @@ class ConnectionManager:
         self.connections : dict[str , List[WebSocket]] = {}
 
     async def connect(self , session_id : str , websocket : WebSocket):
-        await WebSocket.accept()
+        await websocket.accept()
         if session_id not in self.connections:
             self.connections[session_id] = []
         self.connections[session_id].append(websocket)
