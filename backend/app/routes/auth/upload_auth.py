@@ -50,6 +50,9 @@ async def upload_thumbnail(
     #generating dynamic links using session_id from DB
     dynamic_link = f"{FRONTEND_URL}/live?session_id={new_post.session_id}"
 
+    #sending session_id back
+    ses_id = new_post.session_id
+
     return {
         "success": True,
         "post_id": new_post.id,
@@ -57,5 +60,6 @@ async def upload_thumbnail(
         "title": new_post.title,
         "desc": new_post.desc,
         "enable_chat": new_post.is_chat,
-        "link" : dynamic_link
+        "link" : dynamic_link,
+        "ses_id" : ses_id
     }
