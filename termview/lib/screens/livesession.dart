@@ -1,7 +1,9 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:termview/data/notifiers/endsession_notifier.dart';
 import 'package:termview/data/providers/endsession_provider.dart';
+import 'package:termview/data/providers/live_session_provider.dart';
 import 'package:termview/helpers/endsession.dart';
 import 'package:termview/helpers/sharesession.dart';
 import 'package:termview/screens/createquiz.dart';
@@ -9,13 +11,15 @@ import 'package:termview/screens/homescreen.dart';
 import 'package:termview/screens/showlivechat.dart';
 import 'package:termview/widgets/page_transition.dart';
 import 'package:termview/widgets/snackbar.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 class Livesession extends ConsumerStatefulWidget {
   String? postId;
   String? title;
   String? description;
   String? link;
-  Livesession({this.postId,this.title,this.description,this.link,super.key});
+  String? ses_id;
+  Livesession({this.postId,this.title,this.description,this.link,this.ses_id,super.key});
 
   @override
   ConsumerState<Livesession> createState() => _LivesessionState();
@@ -26,10 +30,12 @@ class _LivesessionState extends ConsumerState<Livesession> {
   final FocusNode _terminalfocus = FocusNode();
   final List<String> _terminalLines = [];
   final ScrollController _scrollController = ScrollController();
+  WebSocketChannel? channel;
 
 
   void _sendCommand() {
-    if (_command.text.isNotEmpty) {
+    if (_command.text.isNotEmpty && channel!=null) {
+      channel!.sink.add(_command.text);
       setState(() {
         _terminalLines.add("> ${_command.text}");
         _command.clear();
@@ -44,9 +50,53 @@ class _LivesessionState extends ConsumerState<Livesession> {
     }
   }
 
+  void connectwebsocket(String sessionId)async{
+    try{
+      final ch = await ref.read(livesessionnotifierProvider.notifier).live_session(session_id: widget.ses_id!);
+
+      setState(() {
+        channel =ch;
+      });
+
+      channel!.stream.listen((message){
+        print(message);
+      });
+
+
+    }
+    catch(e){
+      showTerminalSnackbar(context, "Failed to connect : $e");
+      return;
+    }
+  }
+
+
+
+  @override 
+  void initState(){
+    super.initState();
+    Future.microtask((){
+     if(widget.ses_id != null){
+      connectwebsocket(widget.ses_id!);
+    }
+    });
+   
+
+  }
+  @override
+  void dispose() {
+    channel?.sink.close();
+    _command.dispose();
+    _terminalfocus.dispose();
+    _scrollController.dispose();
+    super.dispose();
+}
+
+
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    final sessionstate = ref.watch(livesessionnotifierProvider);
     final endstate = ref.watch(endsessionnotifierProvider);
     ref.listen<EndState>(endsessionnotifierProvider , (previous , next){
       if(next.message != null && next.message != previous?.message){
