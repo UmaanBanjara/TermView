@@ -14,6 +14,7 @@ def fetch_all():
 
     live_sessions = [
         {"id" : s.id, "title":s.title , "desc" : s.desc , "thumb" : s.thumb , "is_live" : s.is_live , "is_chat" : s.is_chat,
+        "session_id" : s.session_id,
         "user_id" : s.user.username if s.user else None
         } for s in result
     ]
