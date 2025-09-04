@@ -42,6 +42,8 @@ class _CreatesessionState extends ConsumerState<Createsession> {
               title: next.title!,
               description: next.description!,
               link: next.link!,
+              ses_id: next.ses_id,
+              
             ));
       } else if (next.error != null && next.error != previous?.error) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
