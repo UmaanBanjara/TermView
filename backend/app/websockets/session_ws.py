@@ -33,5 +33,6 @@ async def websocket_endpoint(websocket : WebSocket , session_id : str):
         while True:
             data = await websocket.receive_text()
             await manager.broadcast(session_id , f"Host says : {data}")
+            print(f"Host Said : {data}")
     except WebSocketDisconnect:
         manager.disconnect(session_id , websocket)
