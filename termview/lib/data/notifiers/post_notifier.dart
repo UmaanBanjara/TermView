@@ -11,6 +11,7 @@ class PostState{
   final String? title;
   final String? description;
   final String? link;
+  final String? ses_id;
 
   PostState({
     this.loading = false,
@@ -19,7 +20,8 @@ class PostState{
     this.postId,
     this.title,
     this.description,
-    this.link
+    this.link,
+    this.ses_id,
   }); 
 
   PostState copyWith({
@@ -30,6 +32,7 @@ class PostState{
     String? title,
     String? description,
     String? link,
+    String? ses_id,
   }){
     return PostState(
       loading: loading ?? this.loading,
@@ -38,7 +41,8 @@ class PostState{
       postId: postId ?? this.postId,
       title: title ?? this.title,
       description: description ?? this.description,
-      link: link ?? this.link
+      link: link ?? this.link,
+      ses_id: ses_id ?? this.ses_id
     );
   }
 }
@@ -67,7 +71,8 @@ class PostNotifier extends StateNotifier<PostState>{
         postId: result['post_id'].toString(),
         title: result['title'] ?? "Can't get title",
         description: result['desc'] ?? "Can't get description",
-        link: result['link'] ?? "Can't get link"
+        link: result['link'] ?? "Can't get link",
+        ses_id: result['ses_id'] ?? "Can't get session_id"
 
         
       );
