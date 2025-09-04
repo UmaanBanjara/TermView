@@ -29,7 +29,7 @@ app.include_router(deleteacc_auth.router , prefix="/auth" , tags=["Delete Accoun
 app.include_router(quiz_auth.router , prefix="/quiz" , tags=["Quiz"])
 app.include_router(fetchall_auth.router , prefix="/fetch" , tags=["Fetch all Live"])
 app.include_router(endsession_auth.router , prefix="/end" , tags=["End Session"])
-app.include_router(router, prefix="/websocket" , tags=["Web Socket"])
+app.include_router(router,tags=["Web Socket"])
 
 #root endpointt
 @app.get("/")
