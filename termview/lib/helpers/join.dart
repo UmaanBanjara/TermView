@@ -5,41 +5,63 @@ import 'package:termview/screens/joinedsession.dart';
 import 'package:termview/widgets/page_transition.dart';
 import 'package:termview/widgets/snackbar.dart';
 
-Future<void> joinsession(BuildContext context , WidgetRef ref , String sessionId )async{
+Future<void> joinsession(
+  BuildContext context,
+  WidgetRef ref,
+  String sessionId,
+) async {
+  // Capture the original context for safe use after async operations
+  final parentContext = context;
   final text = Theme.of(context).textTheme;
-  await showDialog(context: context, builder: (context){
-    return AlertDialog(
-      title: Text('Join Session' , style: text.bodyLarge,),
-      content: Text('Are you sure you want to join this session?' , style: text.bodyMedium,),
-      actions: [
-        ElevatedButton(onPressed: (){
-          Navigator.pop(context);
-        }, 
-        style: ElevatedButton.styleFrom(
 
-        )
-        ,child: Text('No')),
+  await showDialog(
+    context: context,
+    builder: (dialogContext) {
+      return AlertDialog(
+        title: Text(
+          'Join Session',
+          style: text.bodyLarge,
+        ),
+        content: Text(
+          'Are you sure you want to join this session?',
+          style: text.bodyMedium,
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+            },
+            child: Text('No'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              // Close the dialog first
+              Navigator.pop(dialogContext);
 
-        ElevatedButton(
-        onPressed: () async {
-          Navigator.pop(context); 
-          try {
-            final success = await ref.read(livesessionnotifierProvider.notifier)
-                .live_session(session_id: sessionId);
+              // Use Future.microtask to ensure async operation happens after dialog is closed
+              Future.microtask(() async {
+                try {
+                  // Perform the live session join
+                  final success = await ref
+                      .read(livesessionnotifierProvider.notifier)
+                      .live_session(session_id: sessionId);
 
-            if (success) {
-              navigate(context, Joinesesion(sessionId: sessionId,));
-            } else {
-              showTerminalSnackbar(context, "Failed to join session", isError: true);
-            }
-          } catch (e) {
-            showTerminalSnackbar(context, "Connection error: $e", isError: true);
-          }
-        },
-        child: Text('Yes'),
-      )
-
-      ],
-    );
-  });
+                  // Navigate to the joined session page using the safe context
+                  navigate(parentContext, Joinesesion(sessionId: sessionId));
+                } catch (e) {
+                  // Show snackbar using the safe context
+                  showTerminalSnackbar(
+                    parentContext,
+                    "Connection error: $e",
+                    isError: true,
+                  );
+                }
+              });
+            },
+            child: Text('Yes'),
+          ),
+        ],
+      );
+    },
+  );
 }
