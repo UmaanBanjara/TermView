@@ -20,7 +20,7 @@ idna==3.10
 imagekitio==4.1.0
 Jinja2==3.1.6
 MarkupSafe==3.0.2
-passlib==1.7.4
+passlib[bcrypt]==1.7.4.post1
 psycopg2-binary==2.9.10
 pyasn1==0.6.1
 pycparser==2.22
@@ -40,4 +40,4 @@ starlette==0.47.2
 typing-inspection==0.4.1
 typing_extensions==4.14.1
 urllib3==1.26.20
-uvicorn==0.35.0
+uvicorn[standard]==0.35.0
