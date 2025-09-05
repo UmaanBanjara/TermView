@@ -124,7 +124,7 @@ void dispose() {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             child: ElevatedButton(
               onPressed: () {
-                leavesession(context, onConfirm: () {});
+                leavesession(context, channel, widget.sessionId!);
               },
               style: ElevatedButton.styleFrom(
                   textStyle: text.bodyMedium, backgroundColor: Colors.redAccent),
