@@ -54,7 +54,7 @@ class _JoinesesionState extends ConsumerState<Joinesesion> {
           });
         }
 
-        if(decoded['type'] == 'sessionended'){
+        else if (decoded['type'] == 'sessionended'){
           showTerminalSnackbar(context, decoded['message'] , isError: false);
 
           Future.delayed(const Duration(seconds: 1), (){
@@ -130,7 +130,7 @@ void dispose() {
                 navigate(context, Viewallquizes());
               },
               style: ElevatedButton.styleFrom(textStyle: text.bodyMedium),
-              child: const Text("10 Joined"),
+              child:  Text("${_usercount ?? 0}"),
             ),
           ),
           Padding(
