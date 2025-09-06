@@ -37,20 +37,22 @@ class _LivesessionState extends ConsumerState<Livesession> {
 
 
   void _sendCommand() {
-    if (_command.text.isNotEmpty && channel!=null) {
-      channel!.sink.add(_command.text);
+    if(_command.text.isEmpty && channel != null){
+      channel!.sink.add(jsonEncode({
+        "type" : "message",
+        "content" : _command.text
+      }));
       setState(() {
         _terminalLines.add("> ${_command.text}");
         _command.clear();
         _terminalfocus.requestFocus();
+        
       });
-
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_scrollController.hasClients) {
-          _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-        }
-      });
+      if(_scrollController.hasClients){
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+      }
     }
+    
   }
 
   void connectwebsocket(String sessionId)async{
