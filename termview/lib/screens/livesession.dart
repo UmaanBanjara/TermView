@@ -68,7 +68,7 @@ class _LivesessionState extends ConsumerState<Livesession> {
             setState(() {
               _usercount  = decoded["count"];
             });
-            showTerminalSnackbar(context, "Users count : ${_usercount}");
+            
           }
           // if(decoded['type'] == 'sessionended'){
             
