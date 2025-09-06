@@ -29,7 +29,7 @@ Future<void> leavesession(BuildContext context, WebSocketChannel? channel ,Strin
           Future.microtask(()async{
             try{
               channel!.sink.add(jsonEncode({
-                "type" : "sessionended"
+                "type" : "endsession"
               }));
 
               await channel!.sink.close();
