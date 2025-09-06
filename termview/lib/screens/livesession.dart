@@ -1,4 +1,6 @@
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:termview/data/notifiers/endsession_notifier.dart';
@@ -31,6 +33,7 @@ class _LivesessionState extends ConsumerState<Livesession> {
   final List<String> _terminalLines = [];
   final ScrollController _scrollController = ScrollController();
   WebSocketChannel? channel;
+  int? _usercount;
 
 
   void _sendCommand() {
@@ -59,7 +62,25 @@ class _LivesessionState extends ConsumerState<Livesession> {
       });
 
       channel!.stream.listen((message){
-        print(message);
+        try{
+          final decoded =jsonDecode(message);
+          if(decoded['type'] == "usercount"){
+            setState(() {
+              _usercount  = decoded["count"];
+            });
+            showTerminalSnackbar(context, "Users count : ${_usercount}");
+          }
+          // if(decoded['type'] == 'sessionended'){
+            
+          //   showTerminalSnackbar(context, decoded['message'] , isError: false);
+          //   Future.delayed(Duration(seconds: 1) , (){
+          //     navigate(context, Homescreen());
+          //   });
+            
+          // }
+        }catch(e){
+          print(message);
+        }
       });
 
 
@@ -142,7 +163,7 @@ class _LivesessionState extends ConsumerState<Livesession> {
             ElevatedButton(
             onPressed: () {},
             style: ElevatedButton.styleFrom(textStyle: text.bodyMedium),
-            child: const Text("10 Joined"),
+            child: Text("${_usercount ?? 0}"),
                       ),
                       ElevatedButton(
             onPressed: () {
