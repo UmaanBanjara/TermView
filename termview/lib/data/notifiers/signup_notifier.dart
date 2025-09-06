@@ -16,11 +16,12 @@ class SignupState{
     bool? loading,
     String? error,
     String? message,
+    int? user_id
   }){
     return SignupState(
       loading: loading ?? this.loading,
       error: error ?? this.error,
-      message: message ?? this.message
+      message: message ?? this.message,
     );
   }
 
@@ -40,7 +41,8 @@ class SignupNotifier extends StateNotifier<SignupState>{
       state = state.copyWith(
         loading: false,
         message: result['message'],
-        error: null
+        error: null,
+
       );
     }
     catch(e){
