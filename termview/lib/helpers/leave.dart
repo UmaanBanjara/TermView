@@ -1,4 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:termview/screens/homescreen.dart';
+import 'package:termview/widgets/page_transition.dart';
 
 import 'package:termview/widgets/snackbar.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -24,12 +28,16 @@ Future<void> leavesession(BuildContext context, WebSocketChannel? channel ,Strin
 
           Future.microtask(()async{
             try{
-              await channel.sink.close();
-              showTerminalSnackbar(parentContext, "Disconnected From Session" , isError: false);
+              channel!.sink.add(jsonEncode({
+                "type" : "sessionended"
+              }));
 
+              await channel!.sink.close();
+              showTerminalSnackbar(parentContext, "Session Ended Successfully" , isError: false);
+              navigate(parentContext, Homescreen());
             }
             catch(e){
-              showTerminalSnackbar(parentContext, "Connection error : $e" , isError: true);
+              showTerminalSnackbar(context, "Connection error, Please try again" , isError: true);
             }
           });
         }, 
