@@ -1,8 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:termview/data/providers/live_session_provider.dart';
 import 'package:termview/helpers/leave.dart';
 import 'package:termview/helpers/sharesession.dart';
+import 'package:termview/screens/homescreen.dart';
 import 'package:termview/screens/joinedsessionchat.dart';
 import 'package:termview/screens/viewallquizes.dart';
 import 'package:termview/widgets/page_transition.dart';
@@ -21,6 +24,7 @@ class _JoinesesionState extends ConsumerState<Joinesesion> {
   final List<String> _termlines = [];
   final ScrollController _scrollController = ScrollController();
   WebSocketChannel? channel;
+  int? _usercount;
 
   @override
   void initState(){
@@ -41,12 +45,41 @@ class _JoinesesionState extends ConsumerState<Joinesesion> {
         channel = ch;
       });
       channel!.stream.listen((message) {
-      setState(() {
-        _termlines.add(message);
-        if (_scrollController.hasClients) {
-        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-    }
-  });
+      try{
+        final decoded = jsonDecode(message);
+
+        if(decoded['type'] == 'usercount'){
+          setState(() {
+            _usercount = decoded['count'];
+          });
+        }
+
+        if(decoded['type'] == 'sessionended'){
+          showTerminalSnackbar(context, decoded['message'] , isError: false);
+
+          Future.delayed(const Duration(seconds: 1), (){
+            navigate(context, Homescreen());
+          });
+        }
+
+        else{
+          setState(() {
+            _termlines.add(message);
+
+          });
+          if(_scrollController.hasClients){
+            WidgetsBinding.instance.addPostFrameCallback((_){
+              _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+            });
+          }
+        }
+      }
+      catch(e){
+        showTerminalSnackbar(context, "Something went wrong. Please try again" , isError: true);
+        return;
+      }
+
+  
 });
 
 
