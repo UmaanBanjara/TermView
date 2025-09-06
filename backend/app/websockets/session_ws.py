@@ -1,90 +1,115 @@
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from typing import List
+from fastapi import WebSocket, APIRouter, WebSocketDisconnect, Query, HTTPException
+from typing import Dict
 import asyncio
 import json
+from app.utils.current_user import get_user_id_from_token  # your JWT helper
 
-router = APIRouter()
+router = APIRouter()  # router
 
 
 class ConnectionManager:
     def __init__(self):
-        self.connections: dict[str, List[WebSocket]] = {}
+        # Nested dictionary: session_id -> {user_id -> websocket}
+        self.connections: Dict[str, Dict[str, WebSocket]] = {}
 
-    async def connect(self, session_id: str, websocket: WebSocket):
-        await websocket.accept()
+    # Connect a user to a session
+    async def connect(self, session_id: str, user_id: str, websocket: WebSocket):
+        await websocket.accept()  # Accept the websocket connection
         if session_id not in self.connections:
-            self.connections[session_id] = []
-        self.connections[session_id].append(websocket)
+            self.connections[session_id] = {}
+        self.connections[session_id][user_id] = websocket
         print(
-            f"Connection added : Session ID = {session_id} | total = {len(self.connections[session_id])}"
+            f"Connection added: SessionId={session_id}, UserId={user_id}, Total Users={len(self.connections[session_id])}"
         )
-        await self.broadcast_user(session_id)
+        await self.broadcastUserAccount(session_id)
 
-    async def disconnect(self, session_id: str, websocket: WebSocket):
-        if session_id in self.connections:
-            if websocket in self.connections[session_id]:
-                self.connections[session_id].remove(websocket)
-                print(
-                    f"Connection Closed : Session ID = {session_id} , remaining = {len(self.connections[session_id])}"
-                )
-            if not self.connections[session_id]:
-                del self.connections[session_id]
-                print(f"Session : {session_id}, Cleared No Active Connections")
-            else:
-                await self.broadcast_user(session_id)
+    # Disconnect a user
+    async def disconnect(self, session_id: str, user_id: str):
+        if session_id in self.connections and user_id in self.connections[session_id]:
+            del self.connections[session_id][user_id]
+            print(
+                f"Connection closed: SessionId={session_id}, UserId={user_id}, Remaining Users={len(self.connections[session_id])}"
+            )
+        if session_id in self.connections and not self.connections[session_id]:
+            del self.connections[session_id]
+            print(f"Session cleared: {session_id} (no active users)")
+        else:
+            await self.broadcastUserAccount(session_id)
 
+    # Broadcast a message to all users in a session
     async def broadcast(self, session_id: str, message: str):
         if session_id in self.connections:
-            tasks = []
-            for connection in list(self.connections[session_id]):
-                tasks.append(self._safe_send(session_id, connection, message))
+            tasks = [
+                self._safe_send(session_id, user_id, ws, message)
+                for user_id, ws in self.connections[session_id].items()
+            ]
             await asyncio.gather(*tasks)
 
-    async def broadcast_user(self, session_id: str):
+    # Broadcast current user count to all users
+    async def broadcastUserAccount(self, session_id: str):
         if session_id in self.connections:
-            tasks = []
             count = len(self.connections[session_id])
             message = json.dumps({"type": "usercount", "count": count})
-            for connection in self.connections[session_id]:
-                tasks.append(self._safe_send(session_id, connection, message))
+            tasks = [
+                self._safe_send(session_id, user_id, ws, message)
+                for user_id, ws in self.connections[session_id].items()
+            ]
             await asyncio.gather(*tasks)
 
-    async def endSession(self , session_id : str):
+    # End a session and notify all users
+    async def EndSession(self, session_id: str):
         if session_id in self.connections:
-            message = json.dumps({"type" : "sessionended" , "message" : "Host has ended the session. Thanks for tuning in"})
-            tasks = [self._safe_send(session_id , conn , message) for conn in self.connections[session_id]]
+            message = json.dumps({
+                "type": "endsession",
+                "message": "Host has ended the session. Thanks for tuning in"
+            })
+            tasks = [
+                self._safe_send(session_id, user_id, ws, message)
+                for user_id, ws in self.connections[session_id].items()
+            ]
             await asyncio.gather(*tasks)
 
-            #close all connections
-            for conn in self.connections[session_id]:
-                await conn.close()
+            # Close all WebSocket connections
+            for ws in self.connections[session_id].values():
+                await ws.close()
             del self.connections[session_id]
-            print(f"session ended : {session_id} ended all users disconnected")
+            print(f"Session ended: {session_id} - all users disconnected")
 
-    async def _safe_send(self, session_id: str, connection: WebSocket, message: str):
+    # Send a message safely to a single WebSocket
+    async def _safe_send(self, session_id: str, user_id: str, websocket: WebSocket, message: str):
         try:
-            await connection.send_text(message)
+            await websocket.send_text(message)
         except Exception:
-            await self.disconnect(session_id, connection)
+            await self.disconnect(session_id, user_id)  # Disconnect if sending fails
 
 
 manager = ConnectionManager()
 
 
 @router.websocket("/ws/{session_id}")
-async def websocket_endpoint(websocket: WebSocket, session_id: str):
-    await manager.connect(session_id, websocket)
+async def websocket_endpoint(websocket: WebSocket, session_id: str, token: str = Query(...)):
+    # Extract user_id from JWT token
+    user_id = get_user_id_from_token(token)
+    if not user_id:
+        await websocket.close(code=1008)  # Policy violation
+        return
+
+    await manager.connect(session_id, str(user_id), websocket)
+
     try:
         while True:
             data = await websocket.receive_text()
-            decoded = json.loads(data)
-            if decoded.get("type") == "sessionended":
-                await manager.endSession(session_id)
-            else:
-                await manager.broadcast(session_id, f"Host says: {data}")
-            print(f"Host Said: {data}")
+            try:
+                decoded = json.loads(data)
+                if decoded.get("type") == "endsession":
+                    await manager.EndSession(session_id)
+                else:
+                    await manager.broadcast(session_id, f"Host says: {data}")
+            except json.JSONDecodeError:
+                await manager.broadcast(session_id, data)
+
     except WebSocketDisconnect:
-        await manager.disconnect(session_id, websocket)
+        await manager.disconnect(session_id, str(user_id))
     except Exception as e:
-        print(f"Unexpected Error : {str(e)}")
-        await manager.disconnect(session_id, websocket)
+        print(f"Unexpected error: {str(e)}")
+        await manager.disconnect(session_id, str(user_id))
