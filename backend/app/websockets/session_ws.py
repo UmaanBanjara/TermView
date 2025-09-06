@@ -85,13 +85,11 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
-
 @router.websocket("/ws/{session_id}")
 async def websocket_endpoint(websocket: WebSocket, session_id: str, token: str = Query(...)):
-    # Extract user_id from JWT token
     user_id = get_user_id_from_token(token)
     if not user_id:
-        await websocket.close(code=1008)  # Policy violation
+        await websocket.close(code=1008)
         return
 
     await manager.connect(session_id, str(user_id), websocket)
@@ -99,17 +97,17 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str, token: str =
     try:
         while True:
             data = await websocket.receive_text()
-            try:
-                decoded = json.loads(data)
-                if decoded.get("type") == "endsession":
-                    await manager.EndSession(session_id)
-                else:
-                    await manager.broadcast(session_id, f"Host says: {data}")
-            except json.JSONDecodeError:
-                await manager.broadcast(session_id, data)
+            decoded = json.loads(data)  # always JSON
+            msg_type = decoded.get("type")
+
+            if msg_type == "endsession":
+                await manager.EndSession(session_id)
+            else:
+                # broadcast the JSON exactly as received
+                await manager.broadcast(session_id, json.dumps(decoded))
 
     except WebSocketDisconnect:
         await manager.disconnect(session_id, str(user_id))
     except Exception as e:
-        print(f"Unexpected error: {str(e)}")
+        print(f"Unexpected error: {e}")
         await manager.disconnect(session_id, str(user_id))
