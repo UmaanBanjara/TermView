@@ -54,7 +54,7 @@ class _JoinesesionState extends ConsumerState<Joinesesion> {
           });
         }
 
-        else if (decoded['type'] == 'sessionended'){
+        else if (decoded['type'] == 'endsession'){
           showTerminalSnackbar(context, decoded['message'] , isError: false);
 
           Future.delayed(const Duration(seconds: 1), (){
@@ -62,10 +62,9 @@ class _JoinesesionState extends ConsumerState<Joinesesion> {
           });
         }
 
-        else{
+        else if (decoded['type'] == 'message'){
           setState(() {
-            _termlines.add(message);
-
+            _termlines.add(decoded['content']);
           });
           if(_scrollController.hasClients){
             WidgetsBinding.instance.addPostFrameCallback((_){
