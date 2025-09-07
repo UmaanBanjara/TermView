@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:termview/data/providers/live_session_provider.dart';
-import 'package:termview/helpers/leave.dart';
 import 'package:termview/helpers/sharesession.dart';
+import 'package:termview/helpers/userleavesession.dart';
 import 'package:termview/screens/homescreen.dart';
 import 'package:termview/screens/joinedsessionchat.dart';
 import 'package:termview/screens/viewallquizes.dart';
@@ -14,7 +14,9 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 
 class Joinesesion extends ConsumerStatefulWidget {
   String? sessionId;
-  Joinesesion({this.sessionId,super.key});
+  String? title;
+  String? desc;
+  Joinesesion({this.sessionId,this.title,this.desc,super.key});
 
   @override
   ConsumerState<Joinesesion> createState() => _JoinesesionState();
@@ -107,8 +109,8 @@ void dispose() {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Host Name", style: text.bodyLarge),
-            Text("Title of the session", style: text.bodyMedium),
+            Text("${widget.title ?? "Not Found"}", style: text.bodyLarge , overflow: TextOverflow.ellipsis,maxLines: 1,),
+            Text("${widget.desc ?? "Not Found"}", style: text.bodyMedium , overflow: TextOverflow.ellipsis, maxLines: 1,),
           ],
         ),
         actions: [
@@ -156,7 +158,7 @@ void dispose() {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             child: ElevatedButton(
               onPressed: () {
-                leavesession(context, channel, widget.sessionId!);
+                usersleavesession(context , channel);
               },
               style: ElevatedButton.styleFrom(
                   textStyle: text.bodyMedium, backgroundColor: Colors.redAccent),
