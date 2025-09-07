@@ -7,6 +7,7 @@ class LiveSessionRepository {
   Future<WebSocketChannel> connect(String session_id)async{
     try{
       final token = await _storage.read(key: "access_token");
+      print(token);
       if(token == null)throw Exception("Token Not Found");
       final channel = WebSocketChannel.connect(
         Uri.parse('$baseUrl/$session_id?token=$token')
