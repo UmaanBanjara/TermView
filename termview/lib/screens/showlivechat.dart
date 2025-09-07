@@ -1,9 +1,15 @@
+
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:termview/helpers/chatsetting.dart';
 import 'package:termview/widgets/snackbar.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 class Showlivechat extends StatefulWidget {
-  const Showlivechat({super.key});
+  final Stream? broadcastStream;
+  final WebSocketChannel? channel;
+   Showlivechat({this.channel ,this.broadcastStream ,super.key});
 
   @override
   State<Showlivechat> createState() => _ShowlivechatState();
@@ -14,18 +20,57 @@ class _ShowlivechatState extends State<Showlivechat> {
   final TextEditingController _chat = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final List _terminalLines = [];
+  
 
   void _sendCommand(){
-    if(_chat.text.isNotEmpty){
+    if(_chat.text.isNotEmpty && widget.channel != null){
+      widget.channel!.sink.add(jsonEncode({
+        "type" : "chat",
+        "content" : _chat.text
+      }));
       setState(() {
-        _terminalLines.add("> ${_chat.text}");
         _chat.clear();
         _chatfocus.requestFocus();
       });
-      WidgetsBinding.instance.addPostFrameCallback((_){
-        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-      });
+      if(_scrollController.hasClients){
+        WidgetsBinding.instance.addPostFrameCallback((_){
+          _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+        });
+      }
     }
+  }
+
+  void _receivemessage(){
+    try{
+      widget.broadcastStream!.listen((message){
+        final decoded = jsonDecode(message);
+        if(decoded['type'] == 'chat'){
+          setState(() {
+            _terminalLines.add("${decoded['username']} said: ${decoded['content']}");
+
+            
+          });
+          if(_scrollController.hasClients){
+            _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+          }
+        }
+        else{
+          return;
+        }
+      });
+      
+    }
+    catch(e){
+      showTerminalSnackbar(context, "Something went wrong : $e" , isError: true);
+    }
+  }
+  @override
+  void initState(){
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_){
+    _receivemessage();
+
+    });
   }
   @override
   Widget build(BuildContext context) {
