@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:termview/data/notifiers/endsession_notifier.dart';
 import 'package:termview/data/providers/endsession_provider.dart';
 import 'package:termview/data/providers/live_session_provider.dart';
-import 'package:termview/helpers/userleavesession.dart';
 import 'package:termview/helpers/leave.dart';
 import 'package:termview/helpers/sharesession.dart';
 import 'package:termview/screens/createquiz.dart';
@@ -35,6 +34,7 @@ class _LivesessionState extends ConsumerState<Livesession> {
   final ScrollController _scrollController = ScrollController();
   WebSocketChannel? channel;
   int? _usercount;
+  late Stream broadcastStream;
 
 
   void _sendCommand() {
@@ -63,8 +63,9 @@ class _LivesessionState extends ConsumerState<Livesession> {
       setState(() {
         channel =ch;
       });
-
-      channel!.stream.listen((message){
+      
+      broadcastStream = channel!.stream.asBroadcastStream();
+      broadcastStream.listen((message){
         try{
           final decoded =jsonDecode(message);
           if(decoded['type'] == "usercount"){
@@ -188,7 +189,14 @@ class _LivesessionState extends ConsumerState<Livesession> {
                       ),
                       ElevatedButton(
             onPressed: () {
-              navigate(context, Showlivechat());
+              if(channel != null){
+              navigate(context, Showlivechat(channel : channel , broadcastStream: broadcastStream,));
+              }
+              else{
+                showTerminalSnackbar(context, "Not Connected yet. Please try again " , isError: false);
+              }
+              
+             
             },
             style: ElevatedButton.styleFrom(textStyle: text.bodyMedium),
             child: const Text("Chats"),
