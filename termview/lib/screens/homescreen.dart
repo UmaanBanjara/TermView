@@ -153,7 +153,7 @@ class _HomescreenState extends ConsumerState<Homescreen> {
 
                               }
                               else{
-                                joinsession(context, ref, session.session_id);
+                                joinsession(context, ref, session.session_id , session.title , session.desc);
                               }
                             },
                           ),
