@@ -9,6 +9,8 @@ Future<void> joinsession(
   BuildContext context,
   WidgetRef ref,
   String sessionId,
+  String? title,
+  String? desc,
 ) async {
   // Capture the original context for safe use after async operations
   final parentContext = context;
@@ -47,7 +49,7 @@ Future<void> joinsession(
                       .live_session(session_id: sessionId);
 
                   // Navigate to the joined session page using the safe context
-                  navigate(parentContext, Joinesesion(sessionId: sessionId));
+                  navigate(parentContext, Joinesesion(sessionId: sessionId , title: title , desc: desc,));
                 } catch (e) {
                   // Show snackbar using the safe context
                   showTerminalSnackbar(
