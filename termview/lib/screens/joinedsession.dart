@@ -27,6 +27,7 @@ class _JoinesesionState extends ConsumerState<Joinesesion> {
   final ScrollController _scrollController = ScrollController();
   WebSocketChannel? channel;
   int? _usercount;
+  late Stream? broadcastStream;
 
   @override
   void initState(){
@@ -46,7 +47,9 @@ class _JoinesesionState extends ConsumerState<Joinesesion> {
       setState(() {
         channel = ch;
       });
-      channel!.stream.listen((message) {
+      broadcastStream = channel!.stream.asBroadcastStream();
+      
+      broadcastStream!.listen((message) {
       try{
         final decoded = jsonDecode(message);
 
@@ -138,7 +141,10 @@ void dispose() {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             child: ElevatedButton(
               onPressed: () {
-                navigate(context, Joinedsessionchat());
+                if(channel != null){
+                navigate(context, Joinedsessionchat(channel: channel,broadcastStream: broadcastStream,));
+
+                }
               },
               style: ElevatedButton.styleFrom(textStyle: text.bodyMedium),
               child: const Text("Chat"),
