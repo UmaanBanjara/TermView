@@ -1,8 +1,13 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:termview/widgets/snackbar.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class Joinedsessionchat extends StatefulWidget {
-  const Joinedsessionchat({super.key});
+  final Stream? broadcastStream;
+  final WebSocketChannel? channel;
+   Joinedsessionchat({this.broadcastStream , this.channel ,super.key});
 
   @override
   State<Joinedsessionchat> createState() => _JoinedsessionchatState();
@@ -10,26 +15,62 @@ class Joinedsessionchat extends StatefulWidget {
 
 class _JoinedsessionchatState extends State<Joinedsessionchat> {
   final ScrollController _scrollController = ScrollController();
-  WebSocketChannel? channel;
   List<String> _chatlines = [];
   final TextEditingController _chat = TextEditingController();
   final FocusNode _chatfocus = FocusNode();
 
-  @override
-  Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    void _sendchat(){
-      if(_chat.text.isNotEmpty){
+  void _sendchat(){
+      if(_chat.text.isNotEmpty && widget.channel != null){
+        widget.channel!.sink.add(jsonEncode({
+          "type" : "chat",
+          "content" : _chat.text
+        }));
         setState(() {
-          _chatlines.add(_chat.text);
           _chat.clear();
           _chatfocus.requestFocus();
         });
-        WidgetsBinding.instance.addPostFrameCallback((_){
+        if(_scrollController.hasClients){
           _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-        });
+        }
       }
     }
+
+    void _receivemessage(){
+      try{
+        widget.broadcastStream!.listen((message){
+          final decoded = jsonDecode(message);
+          if(decoded['type'] == 'chat'){
+            setState(() {
+              _chatlines.add("${decoded['username']} said: ${decoded['content']}");
+
+            });
+            if(_scrollController.hasClients){
+              _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+            }
+          }
+          else{
+            return;
+          }
+        });
+      }
+      catch(e){
+        showTerminalSnackbar(context, "Something went wrong : $e" , isError: true);
+      }
+    }
+
+    @override
+    void initState(){
+      super.initState();
+      WidgetsBinding.instance.addPostFrameCallback((_){
+      _receivemessage();
+
+      });
+    }
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    
     return Scaffold(
       appBar: AppBar(
         leading: BackButton(),
