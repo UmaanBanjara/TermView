@@ -6,7 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:termview/data/notifiers/endsession_notifier.dart';
 import 'package:termview/data/providers/endsession_provider.dart';
 import 'package:termview/data/providers/live_session_provider.dart';
-import 'package:termview/helpers/endsession.dart';
+import 'package:termview/helpers/userleavesession.dart';
+import 'package:termview/helpers/leave.dart';
 import 'package:termview/helpers/sharesession.dart';
 import 'package:termview/screens/createquiz.dart';
 import 'package:termview/screens/homescreen.dart';
@@ -37,7 +38,7 @@ class _LivesessionState extends ConsumerState<Livesession> {
 
 
   void _sendCommand() {
-    if(_command.text.isEmpty && channel != null){
+    if(_command.text.isNotEmpty && channel != null){
       channel!.sink.add(jsonEncode({
         "type" : "message",
         "content" : _command.text
@@ -195,7 +196,7 @@ class _LivesessionState extends ConsumerState<Livesession> {
                       ElevatedButton(
             onPressed: () {
               if(widget.postId != null){
-              endsession(context, ref, widget.postId!);
+              leavesession(context, channel, widget.postId!, ref);
                       
               }
             },
