@@ -81,13 +81,7 @@ class _ShowlivechatState extends State<Showlivechat> {
         leading: BackButton(),
         centerTitle: false,
         title: Text('Live Chat'  , style: text.bodyLarge,),
-        actions: [
-          ElevatedButton(onPressed: (){
-            chatsetting(context, onConfirm: (){
-              showTerminalSnackbar(context, 'Chat setting changed' , isError: false);
-            });
-          }, child: Text('Chat Setting')),
-        ],
+        
       ),
       body: Padding(
         padding: EdgeInsets.all(8),
