@@ -1,13 +1,20 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:termview/data/notifiers/quiz_notifier.dart';
 import 'package:termview/data/providers/login_provider.dart';
 import 'package:termview/data/providers/quiz_provider.dart';
+import 'package:termview/screens/livequizpage.dart';
+import 'package:termview/widgets/page_transition.dart';
 import 'package:termview/widgets/snackbar.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 class Createquiz extends ConsumerStatefulWidget {
-  const Createquiz({super.key});
+  final WebSocketChannel? channel;
+  final Stream? broadcastStream;
+  const Createquiz({this.broadcastStream, this.channel ,super.key});
 
   @override
   ConsumerState<Createquiz> createState() => _CreatequizState();
@@ -21,6 +28,37 @@ class _CreatequizState extends ConsumerState<Createquiz> {
   final TextEditingController _op2 = TextEditingController();
   final TextEditingController _op3 = TextEditingController();
   final TextEditingController _op4 = TextEditingController();
+
+  void _createquiz(){
+    try{
+    
+      if(_ques.text.isNotEmpty && _ans.text.isNotEmpty && _op1.text.isNotEmpty && _op2.text.isNotEmpty && _op3.text.isNotEmpty && _op4.text.isNotEmpty && widget.channel != null){
+      widget.channel!.sink.add(jsonEncode({
+        "type" : "quiz",
+        "ques" : _ques.text,
+        "ans" : _ans.text,
+        "op1" : _op1.text,
+        "op2" : _op2.text,
+        "op3" : _op3.text,
+        "op4" : _op4.text
+      }));
+      WidgetsBinding.instance.addPostFrameCallback((_){
+        if(widget.channel != null && widget.broadcastStream != null){
+
+        
+        showTerminalSnackbar(context, "Quiz is live" ,isError: false);
+        navigate(context, Livequizpage(host: true,user: false,channel: widget.channel!,broadcastStream: widget.broadcastStream!,));
+
+        }
+      });
+    }
+    }
+    catch(e){
+      showTerminalSnackbar(context, "Something went wrong : $e" , isError: true);
+      return;
+    }
+    
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -119,6 +157,7 @@ class _CreatequizState extends ConsumerState<Createquiz> {
                     :
                     ElevatedButton(
                       onPressed: () async {
+
                         if (_formKey.currentState!.validate()) {
                           final token = await ref.read(LoginnotifierProvider.notifier).getToken();
                           if(token == null){
@@ -134,7 +173,10 @@ class _CreatequizState extends ConsumerState<Createquiz> {
                             a4: _op4.text, 
                             ans: _ans.text
                           );
+
+                          _createquiz();
                         }
+                        
                       }, 
                       style: ElevatedButton.styleFrom(
                         minimumSize: Size(0, 50),
