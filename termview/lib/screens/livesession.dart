@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -21,7 +20,15 @@ class Livesession extends ConsumerStatefulWidget {
   String? description;
   String? link;
   String? ses_id;
-  Livesession({this.postId,this.title,this.description,this.link,this.ses_id,super.key});
+
+  Livesession({
+    this.postId,
+    this.title,
+    this.description,
+    this.link,
+    this.ses_id,
+    super.key,
+  });
 
   @override
   ConsumerState<Livesession> createState() => _LivesessionState();
@@ -35,79 +42,68 @@ class _LivesessionState extends ConsumerState<Livesession> {
   WebSocketChannel? channel;
   int? _usercount;
   late Stream broadcastStream;
-
+  bool _hasnewchat = false;
 
   void _sendCommand() {
-    if(_command.text.isNotEmpty && channel != null){
+    if (_command.text.isNotEmpty && channel != null) {
       channel!.sink.add(jsonEncode({
-        "type" : "message",
-        "content" : _command.text
+        "type": "message",
+        "content": _command.text,
       }));
       setState(() {
         _terminalLines.add("> ${_command.text}");
         _command.clear();
         _terminalfocus.requestFocus();
-        
       });
-      if(_scrollController.hasClients){
+      if (_scrollController.hasClients) {
         _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
       }
     }
-    
   }
 
-  void connectwebsocket(String sessionId)async{
-    try{
-      final ch = await ref.read(livesessionnotifierProvider.notifier).live_session(session_id: widget.ses_id!);
+  void connectwebsocket(String sessionId) async {
+    try {
+      final ch = await ref
+          .read(livesessionnotifierProvider.notifier)
+          .live_session(session_id: widget.ses_id!);
 
       setState(() {
-        channel =ch;
+        channel = ch;
       });
-      
+
       broadcastStream = channel!.stream.asBroadcastStream();
-      broadcastStream.listen((message){
-        try{
-          final decoded =jsonDecode(message);
-          if(decoded['type'] == "usercount"){
+      broadcastStream.listen((message) {
+        try {
+          final decoded = jsonDecode(message);
+          if (decoded['type'] == "usercount") {
             setState(() {
-              _usercount  = decoded["count"];
+              _usercount = decoded["count"];
             });
-            
+          } else if (decoded['type'] == "chat") {
+            setState(() {
+              _hasnewchat = true;
+            });
           }
-          // if(decoded['type'] == 'sessionended'){
-            
-          //   showTerminalSnackbar(context, decoded['message'] , isError: false);
-          //   Future.delayed(Duration(seconds: 1) , (){
-          //     navigate(context, Homescreen());
-          //   });
-            
-          // }
-        }catch(e){
+        } catch (e) {
           print(message);
         }
       });
-
-
-    }
-    catch(e){
+    } catch (e) {
       showTerminalSnackbar(context, "Failed to connect : $e");
       return;
     }
   }
 
-
-
-  @override 
-  void initState(){
+  @override
+  void initState() {
     super.initState();
-    Future.microtask((){
-     if(widget.ses_id != null){
-      connectwebsocket(widget.ses_id!);
-    }
+    Future.microtask(() {
+      if (widget.ses_id != null) {
+        connectwebsocket(widget.ses_id!);
+      }
     });
-   
-
   }
+
   @override
   void dispose() {
     channel?.sink.close();
@@ -115,21 +111,20 @@ class _LivesessionState extends ConsumerState<Livesession> {
     _terminalfocus.dispose();
     _scrollController.dispose();
     super.dispose();
-}
-
+  }
 
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final sessionstate = ref.watch(livesessionnotifierProvider);
     final endstate = ref.watch(endsessionnotifierProvider);
-    ref.listen<EndState>(endsessionnotifierProvider , (previous , next){
-      if(next.message != null && next.message != previous?.message){
-        showTerminalSnackbar(context, next.message! , isError: false);
+
+    ref.listen<EndState>(endsessionnotifierProvider, (previous, next) {
+      if (next.message != null && next.message != previous?.message) {
+        showTerminalSnackbar(context, next.message!, isError: false);
         navigate(context, Homescreen());
-      }
-      else if(next.error != null && next.error != previous?.error){
-        showTerminalSnackbar(context, next.error! , isError: true);
+      } else if (next.error != null && next.error != previous?.error) {
+        showTerminalSnackbar(context, next.error!, isError: true);
       }
     });
 
@@ -140,82 +135,114 @@ class _LivesessionState extends ConsumerState<Livesession> {
         titleSpacing: 0,
         centerTitle: false,
         title: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min, 
-        children: [
-          Text(
-            widget.title ?? "Can't get title",
-            style: text.bodyLarge,
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
-          ),
-          Text(
-            widget.description ?? "Can't get description",
-            style: text.bodyMedium,
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
-          ),
-        ],
-      ),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              widget.title ?? "Can't get title",
+              style: text.bodyLarge,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+            ),
+            Text(
+              widget.description ?? "Can't get description",
+              style: text.bodyMedium,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+            ),
+          ],
+        ),
         actions: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8 , vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             child: Wrap(
               spacing: 8,
               runSpacing: 4,
               children: [
-            ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(textStyle: text.bodyMedium),
-            child: Text("${_usercount ?? 0}"),
+                ElevatedButton(
+                  onPressed: () {},
+                  style: ElevatedButton.styleFrom(textStyle: text.bodyMedium),
+                  child: Text("${_usercount ?? 0}"),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    if (widget.link != null) {
+                      sharesession(context, link: widget.link!);
+                    } else {
+                      showTerminalSnackbar(context, "No link available",
+                          isError: false);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(textStyle: text.bodyMedium),
+                  child: const Text("Share Session"),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    if(channel != null && broadcastStream != null){
+                      navigate(context, Createquiz(
+                      channel: channel,
+                      broadcastStream: broadcastStream,
+                    ));
+                    }
+                    
+                  },
+                  style: ElevatedButton.styleFrom(textStyle: text.bodyMedium),
+                  child: const Text("Create Quiz"),
+                ),
+                Stack(
+                  children: [
+                    ElevatedButton(
+                      onPressed: () {
+                        if (channel != null) {
+                          setState(() {
+                            _hasnewchat = false;
+                          });
+                          navigate(
+                            context,
+                            Showlivechat(
+                              channel: channel,
+                              broadcastStream: broadcastStream,
+                            ),
+                          );
+                        } else {
+                          showTerminalSnackbar(context,
+                              "Not Connected yet. Please try again ",
+                              isError: false);
+                        }
+                      },
+                      style:
+                          ElevatedButton.styleFrom(textStyle: text.bodyMedium),
+                      child: const Text("Chats"),
+                    ),
+                    if (_hasnewchat)
+                      Positioned(
+                        right: 4,
+                        top: 4,
+                        child: Container(
+                          width: 10,
+                          height: 10,
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
                       ),
-                      ElevatedButton(
-            onPressed: () {
-              if(widget.link != null){
-              sharesession(context, link: widget.link!);
-            }
-            else{
-              showTerminalSnackbar(context, "No link available" , isError: false);
-            }},
-            style: ElevatedButton.styleFrom(textStyle: text.bodyMedium),
-            child: const Text("Share Session"),
-                      ),
-                      ElevatedButton(
-            onPressed: () {
-              navigate(context, Createquiz());
-            },
-            style: ElevatedButton.styleFrom(textStyle: text.bodyMedium),
-            child: const Text("Create Quiz"),
-                      ),
-                      ElevatedButton(
-            onPressed: () {
-              if(channel != null){
-              navigate(context, Showlivechat(channel : channel , broadcastStream: broadcastStream,));
-              }
-              else{
-                showTerminalSnackbar(context, "Not Connected yet. Please try again " , isError: false);
-              }
-              
-             
-            },
-            style: ElevatedButton.styleFrom(textStyle: text.bodyMedium),
-            child: const Text("Chats"),
-                      ),
-                      ElevatedButton(
-            onPressed: () {
-              if(widget.postId != null){
-              leavesession(context, channel, widget.postId!, ref);
-                      
-              }
-            },
-            style: ElevatedButton.styleFrom(
-                textStyle: text.bodyMedium, backgroundColor: Colors.red),
-            child: const Text("End Session"),
-                      ),
+                  ],
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    if (widget.postId != null) {
+                      leavesession(context, channel, widget.postId!, ref);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                      textStyle: text.bodyMedium,
+                      backgroundColor: Colors.red),
+                  child: const Text("End Session"),
+                ),
               ],
             ),
           )
-          
         ],
       ),
       body: Padding(
@@ -253,16 +280,15 @@ class _LivesessionState extends ConsumerState<Livesession> {
                     decoration: const InputDecoration(
                       hintText: "Enter commands",
                     ),
-                    onSubmitted: (_) => _sendCommand(), // <-- Enter key
+                    onSubmitted: (_) => _sendCommand(),
                   ),
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton(
-                  onPressed: _sendCommand, // <-- Send button
-                  style:
-                      ElevatedButton.styleFrom(textStyle: text.bodyMedium),
+                  onPressed: _sendCommand,
+                  style: ElevatedButton.styleFrom(textStyle: text.bodyMedium),
                   child: const Text('Send'),
-                )
+                ),
               ],
             )
           ],
