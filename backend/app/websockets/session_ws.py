@@ -111,6 +111,15 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str, token: str =
                 })
                 await manager.broadcast(session_id, message_to_broadcast)
 
+            elif msg_type == "vote":
+                username = getusername(int(user_id)) or "Unknown"
+                message_to_broadcast = json.dumps({
+                    "type" : "vote",
+                    "choosed" : decoded.get("choosed"),
+                    "username" : username
+                })
+                await manager.broadcast(session_id, message_to_broadcast)
+
             else:
                 # Forward other messages as-is
                 await manager.broadcast(session_id, json.dumps(decoded))
