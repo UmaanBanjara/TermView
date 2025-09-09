@@ -84,7 +84,7 @@ class _JoinesesionState extends ConsumerState<Joinesesion> {
           }
             else if(decoded['type'] == 'quiz'){
               setState(() {
-                _quiz = false;
+                _quiz = true;
               });
             }
         } catch (e) {
