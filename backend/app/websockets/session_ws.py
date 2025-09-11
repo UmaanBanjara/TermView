@@ -6,9 +6,10 @@ from app.utils.current_user import get_user_id_from_token
 from app.utils.get_username import getusername
 from app.CRUD.chat_crud import new_chat
 from app.CRUD.command_crud import new_command
+from app.CRUD.quiz_crud import new_quiz
+from app.utils.chatandcommand import get_chat_history, get_command_history, get_quiz_history
 
 router = APIRouter()
-
 
 class ConnectionManager:
     def __init__(self):
@@ -23,6 +24,40 @@ class ConnectionManager:
         print(
             f"Connection added: SessionId={session_id}, UserId={user_id}, Total Users={len(self.connections[session_id])}"
         )
+
+        # Send previous chats
+        chats = get_chat_history(session_id)
+        for chat in chats:
+            message = json.dumps({
+                'type': 'chat',
+                'content': chat.message,
+                'username': getusername(chat.user_id) or "Unknown"
+            })
+            await websocket.send_text(message)
+
+        # Send previous commands
+        commands = get_command_history(session_id)
+        for command in commands:
+            message = json.dumps({
+                'type': 'commands',
+                'commands': command.command_txt
+            })
+            await websocket.send_text(message)
+
+        # Send previous quizzes
+        quizes = get_quiz_history(session_id)
+        for q in quizes:
+            quiz_message = json.dumps({
+                'type': 'quiz',
+                'ques': q.ques,
+                'op1': q.a1,
+                'op2': q.a2,
+                'op3': q.a3,
+                'op4': q.a4,
+                'ans': q.ans
+            })
+            await websocket.send_text(quiz_message)
+
         await self.broadcast_user_count(session_id)
 
     async def disconnect(self, session_id: str, user_id: str):
@@ -102,15 +137,13 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str, token: str =
                 await manager.end_session(session_id)
 
             elif msg_type == "chat":
-                # Fetch username from DB
                 username = getusername(int(user_id)) or "Unknown"
                 content = decoded.get("content")
 
-                #save to db
-                new_chat(session_id = session_id , user_id = int(user_id) , message=content)
+                # Save to DB
+                new_chat(session_id=session_id, user_id=int(user_id), message=content)
 
-
-                # Broadcast with username
+                # Broadcast
                 message_to_broadcast = json.dumps({
                     "type": "chat",
                     "content": content,
@@ -121,22 +154,48 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str, token: str =
             elif msg_type == "vote":
                 username = getusername(int(user_id)) or "Unknown"
                 message_to_broadcast = json.dumps({
-                    "type" : "vote",
-                    "choosed" : decoded.get("choosed"),
-                    "username" : username
+                    "type": "vote",
+                    "choosed": decoded.get("choosed"),
+                    "username": username
                 })
                 await manager.broadcast(session_id, message_to_broadcast)
 
             elif msg_type == "command":
                 commands = decoded.get("commands")
 
-                #save to db
-                new_command(session_id = session_id , command_txt = commands)
+                # Save to DB
+                new_command(session_id=session_id, command_txt=commands)
 
                 message_to_broadcast = json.dumps({
-                    "type" : "commands",
-                    "commands" : commands
+                    "type": "commands",
+                    "commands": commands
                 })
+                await manager.broadcast(session_id, message_to_broadcast)
+
+            elif msg_type == "quiz":
+                # Save to DB
+                new_quiz(
+                    user_id=int(user_id),
+                    ques=decoded.get("ques"),
+                    a1=decoded.get("op1"),
+                    a2=decoded.get("op2"),
+                    a3=decoded.get("op3"),
+                    a4=decoded.get("op4"),
+                    ans=decoded.get("ans"),
+                    session_id=session_id
+                )
+
+                # Broadcast
+                quiz_broadcast = json.dumps({
+                    "type": "quiz",
+                    "ques": decoded.get("ques"),
+                    "op1": decoded.get("op1"),
+                    "op2": decoded.get("op2"),
+                    "op3": decoded.get("op3"),
+                    "op4": decoded.get("op4"),
+                    "ans": decoded.get("ans"),
+                })
+                await manager.broadcast(session_id, quiz_broadcast)
 
             else:
                 # Forward other messages as-is
