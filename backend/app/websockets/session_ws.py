@@ -3,7 +3,9 @@ from typing import Dict
 import asyncio
 import json
 from app.utils.current_user import get_user_id_from_token
-from app.utils.get_username import getusername  # your DB helper function
+from app.utils.get_username import getusername
+from app.CRUD.chat_crud import new_chat
+from app.CRUD.command_crud import new_command
 
 router = APIRouter()
 
@@ -102,11 +104,16 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str, token: str =
             elif msg_type == "chat":
                 # Fetch username from DB
                 username = getusername(int(user_id)) or "Unknown"
+                content = decoded.get("content")
+
+                #save to db
+                new_chat(session_id = session_id , user_id = int(user_id) , message=content)
+
 
                 # Broadcast with username
                 message_to_broadcast = json.dumps({
                     "type": "chat",
-                    "content": decoded.get("content"),
+                    "content": content,
                     "username": username
                 })
                 await manager.broadcast(session_id, message_to_broadcast)
@@ -119,6 +126,17 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str, token: str =
                     "username" : username
                 })
                 await manager.broadcast(session_id, message_to_broadcast)
+
+            elif msg_type == "command":
+                commands = decoded.get("commands")
+
+                #save to db
+                new_command(session_id = session_id , command_txt = commands)
+
+                message_to_broadcast = json.dumps({
+                    "type" : "commands",
+                    "commands" : commands
+                })
 
             else:
                 # Forward other messages as-is
