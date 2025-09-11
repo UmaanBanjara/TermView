@@ -4,7 +4,7 @@ from app.testdb.db import SessionLocal
 
 #function to add quiz
 
-def new_quiz(user_id : int , ques : str , a1 : str , a2 : str , a3 : str , a4 : str , ans : str):
+def new_quiz(user_id : int , ques : str , a1 : str , a2 : str , a3 : str , a4 : str , ans : str, session_id : str):
     db: Session = SessionLocal()
     try:
         quiz_new = Quiz(
@@ -14,6 +14,7 @@ def new_quiz(user_id : int , ques : str , a1 : str , a2 : str , a3 : str , a4 : 
             a2=a2,
             a3=a3,
             a4=a4,
+            session_id = session_id,
             ans=ans
         )
         db.add(quiz_new)
