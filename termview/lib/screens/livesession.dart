@@ -47,8 +47,8 @@ class _LivesessionState extends ConsumerState<Livesession> {
   void _sendCommand() {
     if (_command.text.isNotEmpty && channel != null) {
       channel!.sink.add(jsonEncode({
-        "type": "message",
-        "content": _command.text,
+        "type": "command",
+        "commands": _command.text,
       }));
       setState(() {
         _terminalLines.add("> ${_command.text}");
