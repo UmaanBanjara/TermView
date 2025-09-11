@@ -17,6 +17,8 @@ class Quiz(Base):
 
     #foreign key to user tablew
     user_id = Column(Integer, ForeignKey("users.id") , nullable=False)
+    #foreing key to live session id
+    session_id = Column(String, ForeignKey("live.session_id"), nullable=False)
 
     #relationship with user
     user = relationship("User" , back_populates="quizzes")
