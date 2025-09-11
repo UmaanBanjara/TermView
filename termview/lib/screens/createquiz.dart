@@ -1,26 +1,21 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:termview/data/notifiers/quiz_notifier.dart';
-import 'package:termview/data/providers/login_provider.dart';
-import 'package:termview/data/providers/quiz_provider.dart';
 import 'package:termview/screens/livequizpage.dart';
 import 'package:termview/widgets/page_transition.dart';
 import 'package:termview/widgets/snackbar.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
-class Createquiz extends ConsumerStatefulWidget {
+class Createquiz extends StatefulWidget {
   final WebSocketChannel? channel;
   final Stream? broadcastStream;
   const Createquiz({this.broadcastStream, this.channel, super.key});
 
   @override
-  ConsumerState<Createquiz> createState() => _CreatequizState();
+  State<Createquiz> createState() => _CreatequizState();
 }
 
-class _CreatequizState extends ConsumerState<Createquiz> {
+class _CreatequizState extends State<Createquiz> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _ques = TextEditingController();
   final TextEditingController _ans = TextEditingController();
@@ -28,6 +23,8 @@ class _CreatequizState extends ConsumerState<Createquiz> {
   final TextEditingController _op2 = TextEditingController();
   final TextEditingController _op3 = TextEditingController();
   final TextEditingController _op4 = TextEditingController();
+
+  bool _loading = false;
 
   void _createquiz() {
     try {
@@ -62,18 +59,7 @@ class _CreatequizState extends ConsumerState<Createquiz> {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    final quizstate = ref.watch(quiznotifierProvider);
-    ref.listen<QuizState>(quiznotifierProvider, (previous, next) {
-      if (next.message != null && next.message != previous?.message) {
-        showTerminalSnackbar(context, next.message!, isError: false);
-        Navigator.pop(context);
-      } else if (next.error != null && next.error != previous?.error) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          showTerminalSnackbar(context, next.error!, isError: true);
-          return;
-        });
-      }
-    });
+
     return Scaffold(
       appBar: AppBar(
         centerTitle: false,
@@ -164,33 +150,16 @@ class _CreatequizState extends ConsumerState<Createquiz> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
-                      child: quizstate.loading
+                      child: _loading
                           ? const Center(
                               child: SpinKitFadingFour(color: Colors.white),
                             )
                           : ElevatedButton(
                               onPressed: () async {
                                 if (_formKey.currentState!.validate()) {
-                                  final token = await ref
-                                      .read(LoginnotifierProvider.notifier)
-                                      .getToken();
-                                  if (token == null) {
-                                    showTerminalSnackbar(context, "Invalid Token",
-                                        isError: true);
-                                    return;
-                                  }
-                                  await ref
-                                      .read(quiznotifierProvider.notifier)
-                                      .quiz(
-                                          token: token,
-                                          ques: _ques.text,
-                                          a1: _op1.text,
-                                          a2: _op2.text,
-                                          a3: _op3.text,
-                                          a4: _op4.text,
-                                          ans: _ans.text);
-
+                                  setState(() => _loading = true);
                                   _createquiz();
+                                  setState(() => _loading = false);
                                 }
                               },
                               style: ElevatedButton.styleFrom(
