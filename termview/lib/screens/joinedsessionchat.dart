@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -7,7 +8,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 class Joinedsessionchat extends StatefulWidget {
   final Stream? broadcastStream;
   final WebSocketChannel? channel;
-   Joinedsessionchat({this.broadcastStream , this.channel ,super.key});
+  Joinedsessionchat({this.broadcastStream, this.channel, super.key});
 
   @override
   State<Joinedsessionchat> createState() => _JoinedsessionchatState();
@@ -15,70 +16,75 @@ class Joinedsessionchat extends StatefulWidget {
 
 class _JoinedsessionchatState extends State<Joinedsessionchat> {
   final ScrollController _scrollController = ScrollController();
-  List<String> _chatlines = [];
-  final TextEditingController _chat = TextEditingController();
-  final FocusNode _chatfocus = FocusNode();
+  final TextEditingController _chatController = TextEditingController();
+  final FocusNode _chatFocus = FocusNode();
+  List<String> _chatLines = [];
+  late StreamSubscription _subscription;
 
-  void _sendchat(){
-      if(_chat.text.isNotEmpty && widget.channel != null){
-        widget.channel!.sink.add(jsonEncode({
-          "type" : "chat",
-          "content" : _chat.text
-        }));
-        setState(() {
-          _chat.clear();
-          _chatfocus.requestFocus();
-        });
-        if(_scrollController.hasClients){
-          _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+  @override
+  void initState() {
+    super.initState();
+
+    // Listen to broadcast stream and store subscription
+    if (widget.broadcastStream != null) {
+      _subscription = widget.broadcastStream!.listen((message) {
+        final decoded = jsonDecode(message);
+        if (decoded['type'] == 'chat') {
+          setState(() {
+            _chatLines.add("${decoded['username']} said: ${decoded['content']}");
+          });
+          _scrollToBottom();
         }
-      }
-    }
-
-    void _receivemessage(){
-      try{
-        widget.broadcastStream!.listen((message){
-          final decoded = jsonDecode(message);
-          if(decoded['type'] == 'chat'){
-            setState(() {
-              _chatlines.add("${decoded['username']} said: ${decoded['content']}");
-
-            });
-            if(_scrollController.hasClients){
-              _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-            }
-          }
-          else{
-            return;
-          }
-        });
-      }
-      catch(e){
-        showTerminalSnackbar(context, "Something went wrong : $e" , isError: true);
-      }
-    }
-
-    @override
-    void initState(){
-      super.initState();
-      WidgetsBinding.instance.addPostFrameCallback((_){
-      _receivemessage();
-
+      }, onError: (error) {
+        showTerminalSnackbar(context, "Something went wrong: $error", isError: true);
       });
     }
+  }
+
+  void _sendChat() {
+    if (_chatController.text.isNotEmpty && widget.channel != null) {
+      widget.channel!.sink.add(jsonEncode({
+        "type": "chat",
+        "content": _chatController.text,
+      }));
+
+      setState(() {
+        _chatController.clear();
+        _chatFocus.requestFocus();
+      });
+      _scrollToBottom();
+    }
+  }
+
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    _chatController.dispose();
+    _chatFocus.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    
+    final textTheme = Theme.of(context).textTheme;
+
     return Scaffold(
       appBar: AppBar(
         leading: BackButton(),
-        title: Text("Send Chat" , style: text.bodyLarge,),
+        title: Text("Send Chat", style: textTheme.bodyLarge),
         centerTitle: false,
       ),
       body: Padding(
-        padding: EdgeInsets.all(8),
+        padding: const EdgeInsets.all(8),
         child: Column(
           children: [
             Expanded(
@@ -90,13 +96,11 @@ class _JoinedsessionchatState extends State<Joinedsessionchat> {
                     Expanded(
                       child: ListView.builder(
                         controller: _scrollController,
-                        itemCount: _chatlines.length,
-                        itemBuilder: (context , index){
+                        itemCount: _chatLines.length,
+                        itemBuilder: (context, index) {
                           return Text(
-                            _chatlines[index],
-                            style: text.bodyMedium!.copyWith(
-                              color: Colors.greenAccent
-                            ),
+                            _chatLines[index],
+                            style: textTheme.bodyMedium!.copyWith(color: Colors.greenAccent),
                           );
                         },
                       ),
@@ -105,35 +109,29 @@ class _JoinedsessionchatState extends State<Joinedsessionchat> {
                       children: [
                         Expanded(
                           child: TextField(
-                            controller: _chat,
-                            focusNode: _chatfocus,
+                            controller: _chatController,
+                            focusNode: _chatFocus,
                             cursorHeight: 22,
-                            style: text.bodyMedium,
-                            decoration: InputDecoration(
+                            style: textTheme.bodyMedium,
+                            decoration: const InputDecoration(
                               hintText: "What's on your mind?",
-                              
                             ),
-                            onSubmitted: (value) => _sendchat()
+                            onSubmitted: (_) => _sendChat(),
                           ),
                         ),
-                        const SizedBox(width: 8,),
+                        const SizedBox(width: 8),
                         ElevatedButton(
-                          onPressed: (){
-                            _sendchat();
-                          },
-                          style: ElevatedButton.styleFrom(
-                            textStyle: text.bodyMedium
-                          ),
-                          child: Text('Send' , style : text.bodyMedium),
-                        )
+                          onPressed: _sendChat,
+                          style: ElevatedButton.styleFrom(textStyle: textTheme.bodyMedium),
+                          child: Text('Send', style: textTheme.bodyMedium),
+                        ),
                       ],
-                    )
+                    ),
                   ],
-                )
+                ),
               ),
-            )
+            ),
           ],
-          
         ),
       ),
     );
