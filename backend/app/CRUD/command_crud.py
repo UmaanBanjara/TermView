@@ -11,7 +11,7 @@ def new_command(session_id : str , command_txt : str):
             command_txt = command_txt
         )
         db.add(command)
-        db.commit(command)
+        db.commit()
         db.refresh(command)
         return command
     except Exception as e:
