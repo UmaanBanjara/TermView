@@ -1,4 +1,4 @@
-
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -9,86 +9,83 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 class Showlivechat extends StatefulWidget {
   final Stream? broadcastStream;
   final WebSocketChannel? channel;
-   Showlivechat({this.channel ,this.broadcastStream ,super.key});
+  Showlivechat({this.channel, this.broadcastStream, super.key});
 
   @override
   State<Showlivechat> createState() => _ShowlivechatState();
 }
 
 class _ShowlivechatState extends State<Showlivechat> {
-  final FocusNode _chatfocus = FocusNode();
-  final TextEditingController _chat = TextEditingController();
+  final FocusNode _chatFocus = FocusNode();
+  final TextEditingController _chatController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final List _terminalLines = [];
-  
+  final List<String> _terminalLines = [];
+  late StreamSubscription _subscription;
 
-  void _sendCommand(){
-    final text = _chat.text;
-    if(_chat.text.isNotEmpty && widget.channel != null){
-      widget.channel!.sink.add(jsonEncode({
-        "type" : "chat",
-        "content" : text
-      }));
-      setState(() {
-        _terminalLines.add("> $text");
+  @override
+  void initState() {
+    super.initState();
 
-        _chat.clear();
-        
-        _chatfocus.requestFocus();
-      });
-      if(_scrollController.hasClients){
-        WidgetsBinding.instance.addPostFrameCallback((_){
-          _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-        });
-      }
-    }
-  }
-
-  void _receivemessage(){
-    try{
-      widget.broadcastStream!.listen((message){
+    // Subscribe to the broadcast stream
+    if (widget.broadcastStream != null) {
+      _subscription = widget.broadcastStream!.listen((message) {
         final decoded = jsonDecode(message);
-        if(decoded['type'] == 'chat'){
+        if (decoded['type'] == 'chat') {
           setState(() {
             _terminalLines.add("${decoded['username']} said: ${decoded['content']}");
-
-            
           });
-          if(_scrollController.hasClients){
-            _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-          }
+          _scrollToBottom();
         }
-        else{
-          return;
-        }
+      }, onError: (error) {
+        showTerminalSnackbar(context, "Something went wrong: $error", isError: true);
       });
-      
-    }
-    catch(e){
-      showTerminalSnackbar(context, "Something went wrong : $e" , isError: true);
     }
   }
-  @override
-  void initState(){
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_){
-    _receivemessage();
 
-    });
+  void _sendChat() {
+    if (_chatController.text.isNotEmpty && widget.channel != null) {
+      widget.channel!.sink.add(jsonEncode({
+        "type": "chat",
+        "content": _chatController.text,
+      }));
+
+      setState(() {
+        _chatController.clear();
+        _chatFocus.requestFocus();
+      });
+      _scrollToBottom();
+    }
   }
+
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    _chatController.dispose();
+    _chatFocus.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
+    final textTheme = Theme.of(context).textTheme;
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         leading: BackButton(),
         centerTitle: false,
-        title: Text('Live Chat'  , style: text.bodyLarge,),
-        
+        title: Text('Live Chat', style: textTheme.bodyLarge),
       ),
       body: Padding(
-        padding: EdgeInsets.all(8),
+        padding: const EdgeInsets.all(8),
         child: Column(
           children: [
             Expanded(
@@ -96,44 +93,42 @@ class _ShowlivechatState extends State<Showlivechat> {
               child: Container(
                 width: double.infinity,
                 color: Colors.black87,
-                padding: EdgeInsets.all(8),
+                padding: const EdgeInsets.all(8),
                 child: ListView.builder(
                   controller: _scrollController,
                   itemCount: _terminalLines.length,
-                  itemBuilder: (context , index){
+                  itemBuilder: (context, index) {
                     return Text(
                       _terminalLines[index],
-                      style: text.bodyMedium!.copyWith(color: Colors.greenAccent),
+                      style: textTheme.bodyMedium!.copyWith(color: Colors.greenAccent),
                     );
                   },
                 ),
               ),
             ),
-            const SizedBox(height: 10,),
+            const SizedBox(height: 10),
             Row(
               children: [
                 Expanded(
                   child: TextField(
-                    controller: _chat,
+                    controller: _chatController,
                     cursorHeight: 22,
-                    focusNode: _chatfocus,
-                    style: text.bodyMedium,
-                    decoration: InputDecoration(
-                      hintText: "What's on your mind",
+                    focusNode: _chatFocus,
+                    style: textTheme.bodyMedium,
+                    decoration: const InputDecoration(
+                      hintText: "What's on your mind?",
                     ),
-                    onSubmitted: (_)=>_sendCommand(),
+                    onSubmitted: (_) => _sendChat(),
                   ),
                 ),
-                const SizedBox(width: 8,),
-                ElevatedButton(onPressed: (){
-                  _sendCommand();
-                }, 
-                style: ElevatedButton.styleFrom(
-                  textStyle: text.bodyMedium
-                )
-                ,child: Text('Send'))
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: _sendChat,
+                  style: ElevatedButton.styleFrom(textStyle: textTheme.bodyMedium),
+                  child: Text('Send', style: textTheme.bodyMedium),
+                ),
               ],
-            )
+            ),
           ],
         ),
       ),
