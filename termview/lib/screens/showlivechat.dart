@@ -23,13 +23,17 @@ class _ShowlivechatState extends State<Showlivechat> {
   
 
   void _sendCommand(){
+    final text = _chat.text;
     if(_chat.text.isNotEmpty && widget.channel != null){
       widget.channel!.sink.add(jsonEncode({
         "type" : "chat",
-        "content" : _chat.text
+        "content" : text
       }));
       setState(() {
+        _terminalLines.add("> $text");
+
         _chat.clear();
+        
         _chatfocus.requestFocus();
       });
       if(_scrollController.hasClients){
