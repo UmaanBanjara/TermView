@@ -39,7 +39,7 @@ class ConnectionManager:
         commands = get_command_history(session_id)
         for command in commands:
             message = json.dumps({
-                'type': 'commands',
+                'type': 'command',
                 'commands': command.command_txt
             })
             await websocket.send_text(message)
@@ -167,7 +167,7 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str, token: str =
                 new_command(session_id=session_id, command_txt=commands)
 
                 message_to_broadcast = json.dumps({
-                    "type": "commands",
+                    "type": "command",
                     "commands": commands
                 })
                 await manager.broadcast(session_id, message_to_broadcast)
