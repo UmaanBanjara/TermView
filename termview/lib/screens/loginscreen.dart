@@ -110,19 +110,7 @@ class _LoginscreenState extends ConsumerState<Loginscreen> {
                   ),
                   ],
                 ),
-                SizedBox(height: 10,),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ElevatedButton(onPressed: (){
-                      navigate(context, Resetpass());
-                    }, 
-                    style: ElevatedButton.styleFrom(
-                      textStyle: text.bodyMedium,
-                    )
-                    ,child: Text('Forgot Password?'))
-                  ],
-                )
+                
               ],
             ),
           ),
