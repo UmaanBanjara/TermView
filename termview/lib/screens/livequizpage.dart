@@ -23,7 +23,8 @@ class Livequizpage extends StatefulWidget {
 }
 
 class _LivequizpageState extends State<Livequizpage> {
-  late Map<String, dynamic> _quiz = {
+  // Current quiz
+  Map<String, dynamic> _quiz = {
     'question': '',
     'options': ['', '', '', ''],
     'answer': '',
@@ -35,70 +36,62 @@ class _LivequizpageState extends State<Livequizpage> {
   StreamSubscription? _quizSubscription;
 
   void _listenQuizStream() {
-    if (widget.broadcastStream == null) {
-      print("[Livequizpage] No broadcast stream available");
-      return;
-    }
+    if (widget.broadcastStream == null) return;
 
-    print("[Livequizpage] Listening to broadcastStream...");
+    _quizSubscription = widget.broadcastStream!.listen(
+      (message) {
+        try {
+          final decoded = jsonDecode(message);
 
-    _quizSubscription = widget.broadcastStream!.listen((message) {
-      print("[Livequizpage] Raw message: $message");
-
-      try {
-        final decoded = jsonDecode(message);
-        print("[Livequizpage] Decoded: $decoded");
-
-        if (decoded['type'] == 'quiz') {
           if (!mounted) return;
-          setState(() {
-            _selectedOption = null; // reset selection
-            _quiz = {
-              'question': decoded['ques']?.toString() ?? '',
-              'options': [
-                decoded['op1']?.toString() ?? '',
-                decoded['op2']?.toString() ?? '',
-                decoded['op3']?.toString() ?? '',
-                decoded['op4']?.toString() ?? '',
-              ],
-              'answer': decoded['ans']?.toString() ?? '',
-            };
-          });
-          print("[Livequizpage] Quiz Updated: $_quiz");
-        }
 
-        if (decoded['type'] == 'vote') {
-          if (!mounted) return;
-          setState(() {
-            _votelines.add(
-                "${decoded['username'] ?? 'Unknown'} chose: ${decoded['choosed'] ?? ''}");
-          });
-          if (_scrollController.hasClients) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              _scrollController
-                  .jumpTo(_scrollController.position.maxScrollExtent);
+          // ------------------- Quiz Message -------------------
+          if (decoded['type'] == 'quiz') {
+            setState(() {
+              _selectedOption = null;
+              _quiz = {
+                'question': decoded['ques']?.toString() ?? '',
+                'options': [
+                  decoded['op1']?.toString() ?? '',
+                  decoded['op2']?.toString() ?? '',
+                  decoded['op3']?.toString() ?? '',
+                  decoded['op4']?.toString() ?? '',
+                ],
+                'answer': decoded['ans']?.toString() ?? '',
+              };
             });
           }
-          print("[Livequizpage] Vote Added: $_votelines");
-        }
 
-        if (decoded['type'] == 'correct') {
-          print(
-              "[Livequizpage] Correct Answer Revealed: ${decoded['correctanswer']}");
-          showTerminalSnackbar(
-            context,
-            'The Correct Answer is: ${decoded['correctanswer'] ?? ''}',
-            isError: false,
-          );
+          // ------------------- Vote Message -------------------
+          if (decoded['type'] == 'vote') {
+            setState(() {
+              _votelines.add(
+                  "${decoded['username'] ?? 'Unknown'} chose: ${decoded['choosed'] ?? ''}");
+            });
+
+            if (_scrollController.hasClients) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _scrollController
+                    .jumpTo(_scrollController.position.maxScrollExtent);
+              });
+            }
+          }
+
+          // ------------------- Correct Answer Message -------------------
+          if (decoded['type'] == 'correct') {
+            showTerminalSnackbar(
+              context,
+              'The Correct Answer is: ${decoded['correctanswer'] ?? ''}',
+              isError: false,
+            );
+          }
+        } catch (e, st) {
+          print("ERROR decoding message: $e\n$st");
         }
-      } catch (e, st) {
-        print("[Livequizpage] ERROR decoding message: $e\n$st");
-      }
-    }, onError: (err) {
-      print("[Livequizpage] Stream error: $err");
-    }, onDone: () {
-      print("[Livequizpage] Stream closed");
-    });
+      },
+      onError: (err) => print("Stream error: $err"),
+      onDone: () => print("Stream closed"),
+    );
   }
 
   @override
@@ -109,7 +102,6 @@ class _LivequizpageState extends State<Livequizpage> {
 
   @override
   void dispose() {
-    print("[Livequizpage] Disposing...");
     _quizSubscription?.cancel();
     _scrollController.dispose();
     super.dispose();
@@ -153,8 +145,6 @@ class _LivequizpageState extends State<Livequizpage> {
                     groupValue: _selectedOption,
                     onChanged: (val) {
                       setState(() => _selectedOption = val);
-                      print(
-                          "[Livequizpage] User selected option: $val -> $option");
                     },
                   ),
                 );
@@ -164,10 +154,7 @@ class _LivequizpageState extends State<Livequizpage> {
                 children: [
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () {
-                        setState(() => _selectedOption = null);
-                        print("[Livequizpage] Selection cancelled");
-                      },
+                      onPressed: () => setState(() => _selectedOption = null),
                       child: Text("Cancel", style: text.bodyMedium),
                     ),
                   ),
@@ -176,10 +163,11 @@ class _LivequizpageState extends State<Livequizpage> {
                     child: ElevatedButton(
                       onPressed: () {
                         if (_selectedOption == null) {
-                          showTerminalSnackbar(context,
-                              "Please select an option before sending",
-                              isError: true);
-                          print("[Livequizpage] Send blocked: no selection");
+                          showTerminalSnackbar(
+                            context,
+                            "Please select an option before sending",
+                            isError: true,
+                          );
                           return;
                         }
                         final selectedAnswer =
@@ -189,9 +177,10 @@ class _LivequizpageState extends State<Livequizpage> {
                           'choosed': selectedAnswer,
                         }));
                         showTerminalSnackbar(
-                            context, "Vote sent: $selectedAnswer",
-                            isError: false);
-                        print("[Livequizpage] Vote sent: $selectedAnswer");
+                          context,
+                          "Vote sent: $selectedAnswer",
+                          isError: false,
+                        );
                       },
                       child: Text("Send", style: text.bodyMedium),
                     ),
@@ -231,7 +220,11 @@ class _LivequizpageState extends State<Livequizpage> {
                     'type': 'correct',
                     'correctanswer': answer,
                   }));
-                  print("[Livequizpage] Reveal Answer sent: $answer");
+                  showTerminalSnackbar(
+                    context,
+                    "Correct answer sent: $answer",
+                    isError: false,
+                  );
                 },
                 child: Text("Reveal Answer", style: text.bodyMedium),
               ),
