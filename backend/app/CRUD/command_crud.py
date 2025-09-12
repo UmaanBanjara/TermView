@@ -8,7 +8,7 @@ def new_command(session_id : str , command_txt : str):
     try:
         command = Command(
             session_id = session_id,
-            command_txt = command_txt
+            command_text = command_txt
         )
         db.add(command)
         db.commit()
