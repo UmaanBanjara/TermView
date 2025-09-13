@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:termview/helpers/chatsetting.dart';
 import 'package:termview/widgets/snackbar.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
