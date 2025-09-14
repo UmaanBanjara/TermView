@@ -171,7 +171,7 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str, token: str =
                     # Run command inside Docker sandbox
                     result = subprocess.run(
                         [
-                            "docker", "run", "--rm", "--memory=100m", "--cpus=0.5", "--network=none", "command-sandbox",
+                            "/usr/bin/docker", "run", "--rm", "--memory=100m", "--cpus=0.5", "--network=none", "command-sandbox",
                             "sh", "-c", commands
                         ],
                         capture_output=True,
