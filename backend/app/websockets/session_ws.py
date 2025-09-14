@@ -9,6 +9,9 @@ from app.CRUD.chat_crud import new_chat
 from app.CRUD.command_crud import new_command
 from app.CRUD.quiz_crud import new_quiz
 from app.utils.chatandcommand import get_chat_history, get_command_history, get_quiz_history
+import os
+
+os.environ["PATH"] += os.pathsep + "/usr/bin"
 
 router = APIRouter()
 
