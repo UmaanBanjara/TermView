@@ -67,17 +67,18 @@ class _JoinesesionState extends ConsumerState<Joinesesion> {
             Future.delayed(const Duration(seconds: 1), () {
               navigate(context, Homescreen());
             });
-          } else if (decoded['type'] == 'command') {
+          } else if (decoded['type'] == 'command_output') {
             setState(() {
-              _termlines.add(decoded['commands']);
+              _termlines.add("> ${decoded['command']}");
+              _termlines.add(decoded['output']);
             });
             if (_scrollController.hasClients) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
-                _scrollController
-                    .jumpTo(_scrollController.position.maxScrollExtent);
+                _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
               });
             }
-          } else if (decoded['type'] == 'chat') {
+          }
+ else if (decoded['type'] == 'chat') {
             setState(() {
               _hasnewchat = true;
             });
