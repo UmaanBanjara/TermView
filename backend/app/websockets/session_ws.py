@@ -1,4 +1,5 @@
 from fastapi import WebSocket, APIRouter, WebSocketDisconnect, Query
+import subprocess
 from typing import Dict
 import asyncio
 import json
@@ -166,9 +167,28 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str, token: str =
                 # Save to DB
                 new_command(session_id=session_id, command_txt=commands)
 
+                try:
+                    # Run command inside Docker sandbox
+                    result = subprocess.run(
+                        [
+                            "docker", "run", "--rm", "--memory=100m", "--cpus=0.5", "--network=none", "command-sandbox",
+                            "sh", "-c", commands
+                        ],
+                        capture_output=True,
+                        text=True,
+                        timeout=5
+                    )
+                    output = result.stdout.strip() or result.stderr.strip()
+                except subprocess.TimeoutExpired:
+                    output = "Error: Command timed out"
+                except Exception as e:
+                    output = f"Error: {str(e)}"
+
+                # Broadcast output
                 message_to_broadcast = json.dumps({
-                    "type": "command",
-                    "commands": commands
+                    "type": "command_output",
+                    "command": commands,
+                    "output": output
                 })
                 await manager.broadcast(session_id, message_to_broadcast)
 
