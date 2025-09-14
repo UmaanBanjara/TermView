@@ -11,7 +11,6 @@ from app.CRUD.quiz_crud import new_quiz
 from app.utils.chatandcommand import get_chat_history, get_command_history, get_quiz_history
 import os
 
-os.environ["PATH"] += os.pathsep + "/usr/bin"
 
 router = APIRouter()
 
@@ -174,7 +173,7 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str, token: str =
                     # Run command inside Docker sandbox
                     result = subprocess.run(
                         [
-                            "/usr/bin/docker", "run", "--rm", "--memory=100m", "--cpus=0.5", "--network=none", "command-sandbox",
+                            "docker", "run", "--rm", "--memory=100m", "--cpus=0.5", "--network=none", "command-sandbox",
                             "sh", "-c", commands
                         ],
                         capture_output=True,
