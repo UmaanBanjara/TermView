@@ -67,10 +67,10 @@ class _JoinesesionState extends ConsumerState<Joinesesion> {
             Future.delayed(const Duration(seconds: 1), () {
               navigate(context, Homescreen());
             });
-          } else if (decoded['type'] == 'command_output') {
+          } else if (decoded['type'] == 'command_result') {
             setState(() {
               _termlines.add("> ${decoded['command']}");
-              _termlines.add(decoded['output']);
+              _termlines.add(decoded['result']['output']);
             });
             if (_scrollController.hasClients) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
