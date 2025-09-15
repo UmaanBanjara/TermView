@@ -1,21 +1,19 @@
 from fastapi import WebSocket, APIRouter, WebSocketDisconnect, Query
-import subprocess
 from typing import Dict
 import asyncio
 import json
+import aiohttp
 from app.utils.current_user import get_user_id_from_token
 from app.utils.get_username import getusername
 from app.CRUD.chat_crud import new_chat
 from app.CRUD.command_crud import new_command
 from app.CRUD.quiz_crud import new_quiz
 from app.utils.chatandcommand import get_chat_history, get_command_history, get_quiz_history
-    
 
 router = APIRouter()
 
 class ConnectionManager:
     def __init__(self):
-        # Nested dictionary: session_id -> {user_id -> websocket}
         self.connections: Dict[str, Dict[str, WebSocket]] = {}
 
     async def connect(self, session_id: str, user_id: str, websocket: WebSocket):
@@ -23,33 +21,26 @@ class ConnectionManager:
         if session_id not in self.connections:
             self.connections[session_id] = {}
         self.connections[session_id][user_id] = websocket
-        print(
-            f"Connection added: SessionId={session_id}, UserId={user_id}, Total Users={len(self.connections[session_id])}"
-        )
+        print(f"Connection added: SessionId={session_id}, UserId={user_id}, Total Users={len(self.connections[session_id])}")
 
         # Send previous chats
-        chats = get_chat_history(session_id)
-        for chat in chats:
-            message = json.dumps({
+        for chat in get_chat_history(session_id):
+            await websocket.send_text(json.dumps({
                 'type': 'chat',
                 'content': chat.message,
                 'username': getusername(chat.user_id) or "Unknown"
-            })
-            await websocket.send_text(message)
+            }))
 
         # Send previous commands
-        commands = get_command_history(session_id)
-        for command in commands:
-            message = json.dumps({
+        for command in get_command_history(session_id):
+            await websocket.send_text(json.dumps({
                 'type': 'command',
                 'commands': command.command_txt
-            })
-            await websocket.send_text(message)
+            }))
 
         # Send previous quizzes
-        quizes = get_quiz_history(session_id)
-        for q in quizes:
-            quiz_message = json.dumps({
+        for q in get_quiz_history(session_id):
+            await websocket.send_text(json.dumps({
                 'type': 'quiz',
                 'ques': q.ques,
                 'op1': q.a1,
@@ -57,17 +48,14 @@ class ConnectionManager:
                 'op3': q.a3,
                 'op4': q.a4,
                 'ans': q.ans
-            })
-            await websocket.send_text(quiz_message)
+            }))
 
         await self.broadcast_user_count(session_id)
 
     async def disconnect(self, session_id: str, user_id: str):
         if session_id in self.connections and user_id in self.connections[session_id]:
             del self.connections[session_id][user_id]
-            print(
-                f"Connection closed: SessionId={session_id}, UserId={user_id}, Remaining Users={len(self.connections[session_id])}"
-            )
+            print(f"Connection closed: SessionId={session_id}, UserId={user_id}, Remaining Users={len(self.connections[session_id])}")
         if session_id in self.connections and not self.connections[session_id]:
             del self.connections[session_id]
             print(f"Session cleared: {session_id} (no active users)")
@@ -76,35 +64,24 @@ class ConnectionManager:
 
     async def broadcast(self, session_id: str, message: str):
         if session_id in self.connections:
-            tasks = [
-                self._safe_send(session_id, user_id, ws, message)
-                for user_id, ws in self.connections[session_id].items()
-            ]
+            tasks = [self._safe_send(session_id, user_id, ws, message)
+                     for user_id, ws in self.connections[session_id].items()]
             await asyncio.gather(*tasks)
 
     async def broadcast_user_count(self, session_id: str):
         if session_id in self.connections:
-            count = len(self.connections[session_id])
-            message = json.dumps({"type": "usercount", "count": count})
-            tasks = [
-                self._safe_send(session_id, user_id, ws, message)
-                for user_id, ws in self.connections[session_id].items()
-            ]
+            message = json.dumps({"type": "usercount", "count": len(self.connections[session_id])})
+            tasks = [self._safe_send(session_id, user_id, ws, message)
+                     for user_id, ws in self.connections[session_id].items()]
             await asyncio.gather(*tasks)
 
     async def end_session(self, session_id: str):
         if session_id in self.connections:
-            message = json.dumps({
-                "type": "endsession",
-                "message": "Host has ended the session. Thanks for tuning in"
-            })
-            tasks = [
-                self._safe_send(session_id, user_id, ws, message)
-                for user_id, ws in self.connections[session_id].items()
-            ]
+            message = json.dumps({"type": "endsession", "message": "Host has ended the session. Thanks for tuning in"})
+            tasks = [self._safe_send(session_id, user_id, ws, message)
+                     for user_id, ws in self.connections[session_id].items()]
             await asyncio.gather(*tasks)
 
-            # Close all WebSocket connections
             for ws in self.connections[session_id].values():
                 await ws.close()
             del self.connections[session_id]
@@ -116,9 +93,30 @@ class ConnectionManager:
         except Exception:
             await self.disconnect(session_id, user_id)
 
-
 manager = ConnectionManager()
 
+async def call_command_api(session_id: str, command: str):
+    """Call external API and broadcast result without blocking."""
+    url = "https://docker-executor.onrender.com/execute"
+    payload = {"cmd": command}
+    headers = {"Content-Type": "application/json"}
+
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, json=payload, headers=headers) as resp:
+                if resp.status == 200:
+                    result = await resp.json()
+                else:
+                    result = {"error": f"API returned status {resp.status}"}
+    except Exception as e:
+        result = {"error": f"API call failed: {e}"}
+
+    # Broadcast the API result
+    await manager.broadcast(session_id, json.dumps({
+        "type": "command_result",
+        "command": command,
+        "result": result
+    }))
 
 @router.websocket("/ws/{session_id}")
 async def websocket_endpoint(websocket: WebSocket, session_id: str, token: str = Query(...)):
@@ -141,60 +139,35 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str, token: str =
             elif msg_type == "chat":
                 username = getusername(int(user_id)) or "Unknown"
                 content = decoded.get("content")
-
-                # Save to DB
                 new_chat(session_id=session_id, user_id=int(user_id), message=content)
-
-                # Broadcast
-                message_to_broadcast = json.dumps({
+                await manager.broadcast(session_id, json.dumps({
                     "type": "chat",
                     "content": content,
                     "username": username
-                })
-                await manager.broadcast(session_id, message_to_broadcast)
+                }))
 
             elif msg_type == "vote":
                 username = getusername(int(user_id)) or "Unknown"
-                message_to_broadcast = json.dumps({
+                await manager.broadcast(session_id, json.dumps({
                     "type": "vote",
                     "choosed": decoded.get("choosed"),
                     "username": username
-                })
-                await manager.broadcast(session_id, message_to_broadcast)
+                }))
 
             elif msg_type == "command":
                 commands = decoded.get("commands")
-
-                # Save to DB
                 new_command(session_id=session_id, command_txt=commands)
 
-                try:
-                    # Run command inside Docker sandbox
-                    result = subprocess.run(
-                        [
-                            "docker", "run", "--rm", "--memory=100m", "--cpus=0.5", "--network=none", "command-sandbox",
-                            "sh", "-c", commands
-                        ],
-                        capture_output=True,
-                        text=True,
-                        timeout=5
-                    )
-                    output = result.stdout.strip() or result.stderr.strip()
-                except subprocess.TimeoutExpired:
-                    output = "Error: Command timed out"
-                except Exception as e:
-                    output = f"Error: {str(e)}"
+                # Fire async API call without blocking WebSocket
+                asyncio.create_task(call_command_api(session_id, commands))
 
-                # Broadcast output
-                message_to_broadcast = json.dumps({
+                # Broadcast the command itself immediately
+                await manager.broadcast(session_id, json.dumps({
                     "type": "command_output",
-                    "command": commands,
-                    "output": output
-                })
-                await manager.broadcast(session_id, message_to_broadcast)
+                    "command": commands
+                }))
 
             elif msg_type == "quiz":
-                # Save to DB
                 new_quiz(
                     user_id=int(user_id),
                     ques=decoded.get("ques"),
@@ -205,21 +178,17 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str, token: str =
                     ans=decoded.get("ans"),
                     session_id=session_id
                 )
-
-                # Broadcast
-                quiz_broadcast = json.dumps({
+                await manager.broadcast(session_id, json.dumps({
                     "type": "quiz",
                     "ques": decoded.get("ques"),
                     "op1": decoded.get("op1"),
                     "op2": decoded.get("op2"),
                     "op3": decoded.get("op3"),
                     "op4": decoded.get("op4"),
-                    "ans": decoded.get("ans"),
-                })
-                await manager.broadcast(session_id, quiz_broadcast)
+                    "ans": decoded.get("ans")
+                }))
 
             else:
-                # Forward other messages as-is
                 await manager.broadcast(session_id, json.dumps(decoded))
 
     except WebSocketDisconnect:
