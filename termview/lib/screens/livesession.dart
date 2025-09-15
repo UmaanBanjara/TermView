@@ -84,6 +84,11 @@ class _LivesessionState extends ConsumerState<Livesession> {
               _hasnewchat = true;
             });
           }
+          else if (decoded['type'] == "command_result"){
+            setState(() {
+              _terminalLines.add(decoded['result']['output']);
+            });
+          }
         } catch (e) {
           print(message);
         }
@@ -125,7 +130,7 @@ class _LivesessionState extends ConsumerState<Livesession> {
         navigate(context, Homescreen());
       } else if (next.error != null && next.error != previous?.error) {
         showTerminalSnackbar(context, next.error!, isError: true);
-      }
+      } 
     });
 
     return Scaffold(
@@ -293,7 +298,7 @@ class _LivesessionState extends ConsumerState<Livesession> {
             )
           ],
         ),
-      ),
+      ), 
     );
   }
 }
