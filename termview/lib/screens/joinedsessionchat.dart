@@ -1,14 +1,7 @@
-import 'dart:async';
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:termview/widgets/snackbar.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
 
 class Joinedsessionchat extends StatefulWidget {
-  final Stream? broadcastStream;
-  final WebSocketChannel? channel;
-  Joinedsessionchat({this.broadcastStream, this.channel, super.key});
+  Joinedsessionchat({super.key});
 
   @override
   State<Joinedsessionchat> createState() => _JoinedsessionchatState();
@@ -18,60 +11,6 @@ class _JoinedsessionchatState extends State<Joinedsessionchat> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _chatController = TextEditingController();
   final FocusNode _chatFocus = FocusNode();
-  List<String> _chatLines = [];
-  late StreamSubscription _subscription;
-
-  @override
-  void initState() {
-    super.initState();
-
-    // Listen to broadcast stream and store subscription
-    if (widget.broadcastStream != null) {
-      _subscription = widget.broadcastStream!.listen((message) {
-        final decoded = jsonDecode(message);
-        if (decoded['type'] == 'chat') {
-          setState(() {
-            _chatLines.add("${decoded['username']} said: ${decoded['content']}");
-          });
-          _scrollToBottom();
-        }
-      }, onError: (error) {
-        showTerminalSnackbar(context, "Something went wrong: $error", isError: true);
-      });
-    }
-  }
-
-  void _sendChat() {
-    if (_chatController.text.isNotEmpty && widget.channel != null) {
-      widget.channel!.sink.add(jsonEncode({
-        "type": "chat",
-        "content": _chatController.text,
-      }));
-
-      setState(() {
-        _chatController.clear();
-        _chatFocus.requestFocus();
-      });
-      _scrollToBottom();
-    }
-  }
-
-  void _scrollToBottom() {
-    if (_scrollController.hasClients) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _subscription.cancel();
-    _chatController.dispose();
-    _chatFocus.dispose();
-    _scrollController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -96,11 +35,9 @@ class _JoinedsessionchatState extends State<Joinedsessionchat> {
                     Expanded(
                       child: ListView.builder(
                         controller: _scrollController,
-                        itemCount: _chatLines.length,
                         itemBuilder: (context, index) {
                           return Text(
-                            _chatLines[index],
-                            style: textTheme.bodyMedium!.copyWith(color: Colors.greenAccent),
+                            "Hello woldhfkdajf"
                           );
                         },
                       ),
@@ -116,12 +53,12 @@ class _JoinedsessionchatState extends State<Joinedsessionchat> {
                             decoration: const InputDecoration(
                               hintText: "What's on your mind?",
                             ),
-                            onSubmitted: (_) => _sendChat(),
+                            onSubmitted: (_) {},
                           ),
                         ),
                         const SizedBox(width: 8),
                         ElevatedButton(
-                          onPressed: _sendChat,
+                          onPressed: () {},
                           style: ElevatedButton.styleFrom(textStyle: textTheme.bodyMedium),
                           child: Text('Send', style: textTheme.bodyMedium),
                         ),
