@@ -1,15 +1,7 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:termview/screens/livequizpage.dart';
-import 'package:termview/widgets/page_transition.dart';
-import 'package:termview/widgets/snackbar.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
 
 class Createquiz extends StatefulWidget {
-  final WebSocketChannel? channel;
-  final Stream? broadcastStream;
-  const Createquiz({this.broadcastStream, this.channel, super.key});
+  const Createquiz({super.key});
 
   @override
   State<Createquiz> createState() => _CreatequizState();
@@ -23,38 +15,6 @@ class _CreatequizState extends State<Createquiz> {
   final TextEditingController _op2 = TextEditingController();
   final TextEditingController _op3 = TextEditingController();
   final TextEditingController _op4 = TextEditingController();
-
-  bool _loading = false;
-
-  void _createquiz() {
-    try {
-      if (widget.channel != null) {
-        widget.channel!.sink.add(jsonEncode({
-          "type": "quiz",
-          "ques": _ques.text,
-          "ans": _ans.text,
-          "op1": _op1.text,
-          "op2": _op2.text,
-          "op3": _op3.text,
-          "op4": _op4.text
-        }));
-
-        Future.delayed(const Duration(milliseconds: 100), () {
-          navigate(
-              context,
-              Livequizpage(
-                host: true,
-                user: false,
-                channel: widget.channel!,
-                broadcastStream: widget.broadcastStream!,
-              ));
-        });
-      }
-    } catch (e) {
-      showTerminalSnackbar(context, "Something went wrong : $e", isError: true);
-      return;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -150,33 +110,25 @@ class _CreatequizState extends State<Createquiz> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
-                      child: _loading
-                          ? const Center(
-                              child: SpinKitFadingFour(color: Colors.white),
-                            )
-                          : ElevatedButton(
-                              onPressed: () async {
-                                if (_formKey.currentState!.validate()) {
-                                  setState(() => _loading = true);
-                                  _createquiz();
-                                  setState(() => _loading = false);
-                                }
-                              },
-                              style: ElevatedButton.styleFrom(
-                                  minimumSize: const Size(0, 50),
-                                  textStyle: text.bodyMedium),
-                              child: const Text("Create")),
+                      child: ElevatedButton(
+                        onPressed: () async {},
+                        style: ElevatedButton.styleFrom(
+                            minimumSize: const Size(0, 50),
+                            textStyle: text.bodyMedium),
+                        child: const Text("Create"),
+                      ),
                     ),
                     const SizedBox(width: 20),
                     Expanded(
                       child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                          style: ElevatedButton.styleFrom(
-                              textStyle: text.bodyMedium,
-                              minimumSize: const Size(0, 50)),
-                          child: const Text('Cancel')),
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                            textStyle: text.bodyMedium,
+                            minimumSize: const Size(0, 50)),
+                        child: const Text('Cancel'),
+                      ),
                     ),
                   ],
                 )
