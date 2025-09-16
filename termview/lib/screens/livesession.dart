@@ -1,25 +1,19 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:termview/data/notifiers/endsession_notifier.dart';
 import 'package:termview/data/providers/endsession_provider.dart';
 import 'package:termview/data/providers/live_session_provider.dart';
-import 'package:termview/helpers/leave.dart';
 import 'package:termview/helpers/sharesession.dart';
-import 'package:termview/screens/createquiz.dart';
 import 'package:termview/screens/homescreen.dart';
-import 'package:termview/screens/showlivechat.dart';
 import 'package:termview/widgets/page_transition.dart';
 import 'package:termview/widgets/snackbar.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
 
 class Livesession extends ConsumerStatefulWidget {
-  String? postId;
-  String? title;
-  String? description;
-  String? link;
-  String? ses_id;
+  final String? postId;
+  final String? title;
+  final String? description;
+  final String? link;
+  final String? ses_id;
 
   Livesession({
     this.postId,
@@ -37,86 +31,7 @@ class Livesession extends ConsumerStatefulWidget {
 class _LivesessionState extends ConsumerState<Livesession> {
   final TextEditingController _command = TextEditingController();
   final FocusNode _terminalfocus = FocusNode();
-  final List<String> _terminalLines = [];
   final ScrollController _scrollController = ScrollController();
-  WebSocketChannel? channel;
-  int? _usercount;
-  late Stream broadcastStream;
-  bool _hasnewchat = false;
-
-  void _sendCommand() {
-    if (_command.text.isNotEmpty && channel != null) {
-      channel!.sink.add(jsonEncode({
-        "type": "command",
-        "commands": _command.text,
-      }));
-      setState(() {
-        _terminalLines.add("> ${_command.text}");
-        _command.clear();
-        _terminalfocus.requestFocus();
-      });
-      if (_scrollController.hasClients) {
-        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-      }
-    }
-  }
-
-  void connectwebsocket(String sessionId) async {
-    try {
-      final ch = await ref
-          .read(livesessionnotifierProvider.notifier)
-          .live_session(session_id: widget.ses_id!);
-
-      setState(() {
-        channel = ch;
-      });
-
-      broadcastStream = channel!.stream.asBroadcastStream();
-      broadcastStream.listen((message) {
-        try {
-          final decoded = jsonDecode(message);
-          if (decoded['type'] == "usercount") {
-            setState(() {
-              _usercount = decoded["count"];
-            });
-          } else if (decoded['type'] == "chat") {
-            setState(() {
-              _hasnewchat = true;
-            });
-          }
-          else if (decoded['type'] == "command_result"){
-            setState(() {
-              _terminalLines.add(decoded['result']['output']);
-            });
-          }
-        } catch (e) {
-          print(message);
-        }
-      });
-    } catch (e) {
-      showTerminalSnackbar(context, "Failed to connect : $e");
-      return;
-    }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    Future.microtask(() {
-      if (widget.ses_id != null) {
-        connectwebsocket(widget.ses_id!);
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    channel?.sink.close();
-    _command.dispose();
-    _terminalfocus.dispose();
-    _scrollController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -130,7 +45,7 @@ class _LivesessionState extends ConsumerState<Livesession> {
         navigate(context, Homescreen());
       } else if (next.error != null && next.error != previous?.error) {
         showTerminalSnackbar(context, next.error!, isError: true);
-      } 
+      }
     });
 
     return Scaffold(
@@ -167,7 +82,7 @@ class _LivesessionState extends ConsumerState<Livesession> {
                 ElevatedButton(
                   onPressed: () {},
                   style: ElevatedButton.styleFrom(textStyle: text.bodyMedium),
-                  child: Text("${_usercount ?? 0}"),
+                  child: Text("HELLO WORLD"),
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -182,64 +97,21 @@ class _LivesessionState extends ConsumerState<Livesession> {
                   child: const Text("Share Session"),
                 ),
                 ElevatedButton(
-                  onPressed: () {
-                    if(channel != null && broadcastStream != null){
-                      navigate(context, Createquiz(
-                      channel: channel,
-                      broadcastStream: broadcastStream,
-                    ));
-                    }
-                    
-                  },
+                  onPressed: () {},
                   style: ElevatedButton.styleFrom(textStyle: text.bodyMedium),
                   child: const Text("Create Quiz"),
                 ),
                 Stack(
                   children: [
                     ElevatedButton(
-                      onPressed: () {
-                        if (channel != null) {
-                          setState(() {
-                            _hasnewchat = false;
-                          });
-                          navigate(
-                            context,
-                            Showlivechat(
-                              channel: channel,
-                              broadcastStream: broadcastStream,
-                            ),
-                          );
-                        } else {
-                          showTerminalSnackbar(context,
-                              "Not Connected yet. Please try again ",
-                              isError: false);
-                        }
-                      },
-                      style:
-                          ElevatedButton.styleFrom(textStyle: text.bodyMedium),
+                      onPressed: () {},
+                      style: ElevatedButton.styleFrom(textStyle: text.bodyMedium),
                       child: const Text("Chats"),
                     ),
-                    if (_hasnewchat)
-                      Positioned(
-                        right: 4,
-                        top: 4,
-                        child: Container(
-                          width: 10,
-                          height: 10,
-                          decoration: const BoxDecoration(
-                            color: Colors.red,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ),
                   ],
                 ),
                 ElevatedButton(
-                  onPressed: () {
-                    if (widget.postId != null) {
-                      leavesession(context, channel, widget.postId!, ref);
-                    }
-                  },
+                  onPressed: () {},
                   style: ElevatedButton.styleFrom(
                       textStyle: text.bodyMedium,
                       backgroundColor: Colors.red),
@@ -262,13 +134,8 @@ class _LivesessionState extends ConsumerState<Livesession> {
                 padding: const EdgeInsets.all(8),
                 child: ListView.builder(
                   controller: _scrollController,
-                  itemCount: _terminalLines.length,
                   itemBuilder: (context, index) {
-                    return Text(
-                      _terminalLines[index],
-                      style: text.bodyMedium!
-                          .copyWith(color: Colors.greenAccent),
-                    );
+                    return Text("Hello World");
                   },
                 ),
               ),
@@ -285,12 +152,12 @@ class _LivesessionState extends ConsumerState<Livesession> {
                     decoration: const InputDecoration(
                       hintText: "Enter commands",
                     ),
-                    onSubmitted: (_) => _sendCommand(),
+                    onSubmitted: (_) {},
                   ),
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton(
-                  onPressed: _sendCommand,
+                  onPressed: () {},
                   style: ElevatedButton.styleFrom(textStyle: text.bodyMedium),
                   child: const Text('Send'),
                 ),
@@ -298,7 +165,7 @@ class _LivesessionState extends ConsumerState<Livesession> {
             )
           ],
         ),
-      ), 
+      ),
     );
   }
 }
