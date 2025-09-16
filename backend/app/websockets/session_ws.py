@@ -99,11 +99,13 @@ async def call_command_api(session_id: str, command: str):
     """Call external API and broadcast result without blocking."""
     url = "https://docker-executor.onrender.com/execute"
     payload = {"cmd": command}
+    print(f"Calling api : {url} with payload {payload}")
     headers = {"Content-Type": "application/json"}
 
     try:
         async with aiohttp.ClientSession() as session:
             async with session.post(url, json=payload, headers=headers) as resp:
+                print("Response Status : ",resp.status)
                 if resp.status == 200:
                     result = await resp.json()
                 else:
