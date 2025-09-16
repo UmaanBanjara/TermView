@@ -1,20 +1,12 @@
-import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:termview/widgets/snackbar.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
 
 class Livequizpage extends StatefulWidget {
   final bool? host;
   final bool? user;
-  final WebSocketChannel? channel;
-  final Stream? broadcastStream;
 
   const Livequizpage({
     this.host,
     this.user,
-    this.channel,
-    this.broadcastStream,
     super.key,
   });
 
@@ -23,89 +15,8 @@ class Livequizpage extends StatefulWidget {
 }
 
 class _LivequizpageState extends State<Livequizpage> {
-  // Current quiz
-  Map<String, dynamic> _quiz = {
-    'question': '',
-    'options': ['', '', '', ''],
-    'answer': '',
-  };
-
   int? _selectedOption;
-  final List<String> _votelines = [];
   final ScrollController _scrollController = ScrollController();
-  StreamSubscription? _quizSubscription;
-
-  void _listenQuizStream() {
-    if (widget.broadcastStream == null) return;
-
-    _quizSubscription = widget.broadcastStream!.listen(
-      (message) {
-        try {
-          final decoded = jsonDecode(message);
-
-          if (!mounted) return;
-
-          // ------------------- Quiz Message -------------------
-          if (decoded['type'] == 'quiz') {
-            setState(() {
-              _selectedOption = null;
-              _quiz = {
-                'question': decoded['ques']?.toString() ?? '',
-                'options': [
-                  decoded['op1']?.toString() ?? '',
-                  decoded['op2']?.toString() ?? '',
-                  decoded['op3']?.toString() ?? '',
-                  decoded['op4']?.toString() ?? '',
-                ],
-                'answer': decoded['ans']?.toString() ?? '',
-              };
-            });
-          }
-
-          // ------------------- Vote Message -------------------
-          if (decoded['type'] == 'vote') {
-            setState(() {
-              _votelines.add(
-                  "${decoded['username'] ?? 'Unknown'} chose: ${decoded['choosed'] ?? ''}");
-            });
-
-            if (_scrollController.hasClients) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                _scrollController
-                    .jumpTo(_scrollController.position.maxScrollExtent);
-              });
-            }
-          }
-
-          // ------------------- Correct Answer Message -------------------
-          if (decoded['type'] == 'correct') {
-            showTerminalSnackbar(
-              context,
-              'The Correct Answer is: ${decoded['correctanswer'] ?? ''}',
-              isError: false,
-            );
-          }
-        } catch (e, st) {
-          print("ERROR decoding message: $e\n$st");
-        }
-      },
-      onError: (err) => print("Stream error: $err"),
-      onDone: () => print("Stream closed"),
-    );
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _listenQuizStream();
-  }
-
-  @override
-  void dispose() {
-    _quizSubscription?.cancel();
-    _scrollController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -125,19 +36,16 @@ class _LivequizpageState extends State<Livequizpage> {
               Text("Question", style: text.bodyLarge),
               const SizedBox(height: 5),
               Text(
-                _quiz['question']?.toString().isNotEmpty == true
-                    ? _quiz['question']
-                    : "(Waiting for quiz...)",
+                "(Waiting for quiz...)",
                 style: text.bodyMedium,
               ),
               const SizedBox(height: 10),
               Text("Options", style: text.bodyLarge),
               const SizedBox(height: 5),
               ...List.generate(4, (index) {
-                final option = _quiz['options'][index]?.toString() ?? '';
                 return ListTile(
                   title: Text(
-                    option.isNotEmpty ? option : "(waiting...)",
+                    "(waiting...)",
                     style: text.bodyMedium,
                   ),
                   leading: Radio<int>(
@@ -162,25 +70,7 @@ class _LivequizpageState extends State<Livequizpage> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        if (_selectedOption == null) {
-                          showTerminalSnackbar(
-                            context,
-                            "Please select an option before sending",
-                            isError: true,
-                          );
-                          return;
-                        }
-                        final selectedAnswer =
-                            _quiz['options'][_selectedOption!]?.toString() ?? '';
-                        widget.channel?.sink.add(jsonEncode({
-                          'type': 'vote',
-                          'choosed': selectedAnswer,
-                        }));
-                        showTerminalSnackbar(
-                          context,
-                          "Vote sent: $selectedAnswer",
-                          isError: false,
-                        );
+                        // Action for "Send" goes here
                       },
                       child: Text("Send", style: text.bodyMedium),
                     ),
@@ -198,14 +88,13 @@ class _LivequizpageState extends State<Livequizpage> {
                   color: Colors.black87,
                   child: ListView.builder(
                     controller: _scrollController,
-                    itemCount: _votelines.length,
+                    itemCount: 10, // Just a placeholder count
                     itemBuilder: (context, index) {
                       return Padding(
-                        padding: const EdgeInsets.all(4.0),
+                        padding: const EdgeInsets.all(8.0),
                         child: Text(
-                          _votelines[index],
-                          style: text.bodyMedium
-                              ?.copyWith(color: Colors.greenAccent),
+                          "Hello World",
+                          style: const TextStyle(color: Colors.white),
                         ),
                       );
                     },
@@ -215,16 +104,7 @@ class _LivequizpageState extends State<Livequizpage> {
               const SizedBox(height: 10),
               ElevatedButton(
                 onPressed: () {
-                  final answer = _quiz['answer']?.toString() ?? '';
-                  widget.channel?.sink.add(jsonEncode({
-                    'type': 'correct',
-                    'correctanswer': answer,
-                  }));
-                  showTerminalSnackbar(
-                    context,
-                    "Correct answer sent: $answer",
-                    isError: false,
-                  );
+                  // Action for "Reveal Answer" goes here
                 },
                 child: Text("Reveal Answer", style: text.bodyMedium),
               ),
