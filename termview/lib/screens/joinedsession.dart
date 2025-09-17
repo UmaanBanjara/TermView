@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:termview/data/providers/sessionControllerProvider.dart';
 import 'package:termview/data/providers/session_state_provider.dart';
+import 'package:termview/helpers/leave.dart';
 import 'package:termview/helpers/sharesession.dart';
+import 'package:termview/screens/homescreen.dart';
 import 'package:termview/screens/joinedsessionchat.dart';
 import 'package:termview/screens/livequizpage.dart';
 import 'package:termview/widgets/page_transition.dart';
+import 'package:termview/widgets/snackbar.dart';
 
 class Joinesesion extends ConsumerStatefulWidget {
   final String? sessionId;
   final String? title;
   final String? desc;
+  final bool? is_chat;
 
-  Joinesesion({this.sessionId, this.title, this.desc, super.key});
+  Joinesesion({this.sessionId, this.title, this.desc,this.is_chat, super.key});
 
   @override
   ConsumerState<Joinesesion> createState() => _JoinesesionState();
@@ -31,13 +34,30 @@ class _JoinesesionState extends ConsumerState<Joinesesion> {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final sessionstate = ref.watch(sessionnotifierProvider);
-    ref.listen<SessionState>(sessionnotifierProvider , (previous,next){
-      if(previous?.commands.length != next.commands.length){
-      if(_scrollController.hasClients){
-        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+    ref.listen<SessionState>(sessionnotifierProvider, (previous, next) {
+      if ((previous?.commands.length ?? 0) != next.commands.length) {
+        if (_scrollController.hasClients) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _scrollController.animateTo(
+              _scrollController.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOut,
+            );
+          });
+        }
       }
+    });
+
+    ref.listen<SessionState>(sessionnotifierProvider , (previous , next){
+      if(next.message != null && next.message != previous?.message){
+        showTerminalSnackbar(context, next.message! , isError: false);
+        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_)=> Homescreen()) , (route) => false);
       }
-      
+    });
+        ref.listen<SessionState>(sessionnotifierProvider , (previous , next){
+      if(next.reveal != null && next.reveal != previous?.reveal){
+        showTerminalSnackbar(context, "The answer is ${next.reveal}" , isError: false);
+      }
     });
     return Scaffold(
       appBar: AppBar(
@@ -64,37 +84,68 @@ class _JoinesesionState extends ConsumerState<Joinesesion> {
         actions: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            child: ElevatedButton(
+              onPressed: () {},
+              style: ElevatedButton.styleFrom(textStyle: text.bodyMedium),
+              child: Text((sessionstate.joined ?? 0).toString()),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             child: Stack(
+              clipBehavior: Clip.none,
               children: [
                 ElevatedButton(
                   onPressed: () {
                     navigate(context, Livequizpage(user: true,host: false,));
+                    ref.read(sessionnotifierProvider.notifier).resetQuizIndicator();
                   },
                   style: ElevatedButton.styleFrom(textStyle: text.bodyMedium),
                   child: const Text("Quizes"),
                 ),
+                if(sessionstate.hasquiz)
+                    Positioned(
+                      right: -2,
+                      top : -2,
+                      child: Container(
+                        width: 10,
+                        height: 10 ,
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle
+                        ),
+                      ),
+                    )
               ],
             ),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            child: ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(textStyle: text.bodyMedium),
-              child: Text("HELLO WORLD"),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             child: Stack(
+              clipBehavior: Clip.none,
               children: [
+                if(widget.is_chat!)
                 ElevatedButton(
                   onPressed: () {
                     navigate(context, Joinedsessionchat());
+                    ref.read(sessionnotifierProvider.notifier).resetChatIndicator();
                   },
                   style: ElevatedButton.styleFrom(textStyle: text.bodyMedium),
                   child: const Text("Chat"),
                 ),
+                if(sessionstate.haschat)
+                    Positioned(
+                      right: -2,
+                      top : -2,
+                      child: Container(
+                        width: 10,
+                        height: 10 ,
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle
+                        ),
+                      ),
+                    )
               ],
             ),
           ),
@@ -112,7 +163,7 @@ class _JoinesesionState extends ConsumerState<Joinesesion> {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             child: ElevatedButton(
               onPressed: (){
-                ref.read(Sessioncontrollerprovider).disconnect();
+                leavesession(context, ref);
               },
               style: ElevatedButton.styleFrom(
                   textStyle: text.bodyMedium,
@@ -135,15 +186,30 @@ class _JoinesesionState extends ConsumerState<Joinesesion> {
                     Expanded(
                       child: ListView.builder(
                         controller: _scrollController,
-                        itemCount:  sessionstate.commands.length ,
+                        itemCount: sessionstate.commands.length,
                         itemBuilder: (context, index) {
                           final command = sessionstate.commands[index];
-                          return Text(
-                            command['result']?['output'] ?? command['commands'] ?? '',
-                            style: text.bodyMedium!.copyWith(color: Colors.greenAccent),
+                          return RichText(
+                            text: TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: '${command['command'] ?? ''} ',
+                                  style: text.bodyMedium!.copyWith(color: Colors.orangeAccent), // command color
+                                ),
+                                TextSpan(
+                                  text: '>>>>>> ',
+                                  style: text.bodyMedium!.copyWith(color: Colors.white), // separator color
+                                ),
+                                TextSpan(
+                                  text: '${command['result']?['output'] ?? ''}',
+                                  style: text.bodyMedium!.copyWith(color: Colors.greenAccent), // result color
+                                ),
+                              ],
+                            ),
                           );
                         },
                       ),
+
                     ),
                   ],
                 ),
