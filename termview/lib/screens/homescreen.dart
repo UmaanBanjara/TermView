@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:termview/data/providers/fetchall_provider.dart';
-import 'package:termview/data/providers/live_session_provider.dart';
 import 'package:termview/helpers/join.dart';
 import 'package:termview/screens/createsession.dart';
-import 'package:termview/screens/joinedsession.dart';
 import 'package:termview/screens/settings.dart';
 import 'package:termview/widgets/page_transition.dart';
 import 'package:termview/widgets/snackbar.dart';
@@ -153,7 +151,7 @@ class _HomescreenState extends ConsumerState<Homescreen> {
 
                               }
                               else{
-                                joinsession(context, ref, session.session_id , session.title , session.desc);
+                                joinsession(context, ref, session.session_id , session.title , session.desc , session.is_chat);
                               }
                             },
                           ),
