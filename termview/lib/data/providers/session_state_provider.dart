@@ -5,12 +5,23 @@ class SessionState{
   final List<Map<String , dynamic>> commands;
   final List<Map<String , dynamic>> quizzes;
   final List<Map<String , dynamic>> votes;
+  final String? message;
+  final int? joined;
+  final String? reveal;
+
+  final bool haschat;
+  final bool hasquiz;
 
   SessionState({
     this.chats = const [],
     this.commands = const [],
     this.quizzes = const [],
-    this.votes = const []
+    this.votes = const [],
+    this.message,
+    this.joined,
+    this.reveal,
+    this.haschat =false,
+    this.hasquiz = false
   });
 
 
@@ -24,6 +35,11 @@ class SessionState{
         commands: state.commands,
         quizzes: state.quizzes,
         votes: state.votes,
+        message: state.message,
+        joined: state.joined,
+        reveal: state.reveal,
+        haschat: true,
+        hasquiz: state.hasquiz
       );
     }
 
@@ -33,6 +49,11 @@ class SessionState{
         commands: [...state.commands , command],
         quizzes: state.quizzes,
         votes: state.votes,
+        message: state.message,
+        joined: state.joined,
+        reveal: state.reveal,
+        haschat: state.haschat,
+        hasquiz: state.hasquiz,
       );
     }
 
@@ -42,6 +63,11 @@ class SessionState{
         commands : state.commands,
         quizzes: [...state.quizzes , quiz],
         votes: state.votes,
+        message: state.message,
+        joined: state.joined,
+        reveal: state.reveal,
+        haschat: state.haschat,
+        hasquiz: true
       );
     }
     
@@ -50,10 +76,74 @@ class SessionState{
         chats: state.chats,
         commands: state.commands,
         quizzes: state.quizzes,
-        votes: [...state.votes , vote]
+        votes: [...state.votes , vote],
+        message: state.message,
+        joined: state.joined,
+        reveal: state.reveal
       );
     }
+
+    void endMessage(String message){
+      state = SessionState(
+        chats: state.chats,
+        commands: state.commands,
+        quizzes: state.quizzes,
+        votes: state.votes,
+        message: message,
+        joined: state.joined,
+        reveal: state.reveal
+      );
+    }
+
+    void updateJoined(int count){
+      state = SessionState(
+        chats: state.chats,
+        commands: state.commands,
+        quizzes: state.quizzes,
+        votes: state.votes,
+        message: state.message,
+        joined: count,
+        reveal: state.reveal
+      );
+    }
+    void revealAnswer(String answer){
+      state = SessionState(
+        chats : state.chats,
+        commands: state.commands,
+        quizzes: state.quizzes,
+        votes: state.votes,
+        message: state.message,
+        joined: state.joined,
+        reveal: answer
+      );
+    }
+
+    void resetChatIndicator() => state = SessionState(
+    chats: state.chats,
+    commands: state.commands,
+    quizzes: state.quizzes,
+    votes: state.votes,
+    message: state.message,
+    joined: state.joined,
+    reveal: state.reveal,
+    haschat: false,
+    hasquiz: state.hasquiz,
+);
+
+void resetQuizIndicator() => state = SessionState(
+    chats: state.chats,
+    commands: state.commands,
+    quizzes: state.quizzes,
+    votes: state.votes,
+    message: state.message,
+    joined: state.joined,
+    reveal: state.reveal,
+    haschat: state.haschat,
+    hasquiz: false,
+);
+
   }
+  
 
   final sessionnotifierProvider = StateNotifierProvider<SessionNotifer , SessionState>((ref){
     return SessionNotifer();
