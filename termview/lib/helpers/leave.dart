@@ -1,55 +1,27 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:termview/data/providers/endsession_provider.dart';
+import 'package:termview/data/providers/sessionControllerProvider.dart';
 import 'package:termview/screens/homescreen.dart';
-import 'package:termview/widgets/page_transition.dart';
-
-import 'package:termview/widgets/snackbar.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
-
-Future<void> leavesession(BuildContext context, WebSocketChannel? channel ,String PostId  , WidgetRef ref) async{
-  final parentContext = context;
+Future<void> leavesession (BuildContext context , WidgetRef ref ) async{
   final text = Theme.of(context).textTheme;
-
-  if(channel == null){
-    showTerminalSnackbar(parentContext, "Not Connected" , isError: true);
-    return;
-  }
-  await showDialog(context: context, builder: (dialogContext){
+  await showDialog(context: context, builder: (context){
     return AlertDialog(
       title:  Text('End Session' , style: text.bodyLarge,),
-      content:  Text("Are you sure you want to end this session?" , style: text.bodyMedium,),
+      content:  Text("Are you sure you want to leave this session?" , style: text.bodyMedium,),
       actions: [
         ElevatedButton(onPressed: (){
-          Navigator.pop(dialogContext);
-        }, child: const Text('No' )),
+          Navigator.pop(context);
+        }, child: const Text('Cancel' )),
         ElevatedButton(onPressed: (){
-          Navigator.pop(dialogContext);
+          Navigator.pop(context);
+          ref.read(Sessioncontrollerprovider).disconnect();
+          Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => Homescreen()), (route) => false);
 
-          Future.microtask(()async{
-            try{
-              channel!.sink.add(jsonEncode({
-                "type" : "endsession"
-              }));
-
-              await channel!.sink.close();
-              print("Before Notifier Call");
-              await ref.read(endsessionnotifierProvider.notifier).endsession(id: PostId);
-              print("After Notifier Call");
-              showTerminalSnackbar(parentContext, "Session Ended Successfully" , isError: false);
-              navigate(parentContext, Homescreen());
-            }
-            catch(e){
-              showTerminalSnackbar(context, "Connection error, Please try again" , isError: true);
-            }
-          });
         }, 
         style: ElevatedButton.styleFrom(
           textStyle: text.bodyMedium
         ),
-        child: Text('Yes'))
+        child: Text('End'))
       ],
     );
   });
