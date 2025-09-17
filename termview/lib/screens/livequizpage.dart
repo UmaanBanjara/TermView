@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:termview/data/providers/session_state_provider.dart';
+import 'package:termview/data/providers/sessionControllerProvider.dart';
 
-class Livequizpage extends StatefulWidget {
+class Livequizpage extends ConsumerStatefulWidget {
   final bool? host;
   final bool? user;
 
@@ -11,16 +14,23 @@ class Livequizpage extends StatefulWidget {
   });
 
   @override
-  State<Livequizpage> createState() => _LivequizpageState();
+  ConsumerState<Livequizpage> createState() => _LivequizpageState();
 }
 
-class _LivequizpageState extends State<Livequizpage> {
+class _LivequizpageState extends ConsumerState<Livequizpage> {
   int? _selectedOption;
   final ScrollController _scrollController = ScrollController();
+
+  void _sendVote(String vote) {
+    ref.read(Sessioncontrollerprovider).sendVote(vote);
+    setState(() => _selectedOption = null);
+  }
 
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    final sessionState = ref.watch(sessionnotifierProvider);
+    final currentQuiz = sessionState.quizzes.isNotEmpty ? sessionState.quizzes.last : null;
 
     return Scaffold(
       appBar: AppBar(
@@ -36,18 +46,16 @@ class _LivequizpageState extends State<Livequizpage> {
               Text("Question", style: text.bodyLarge),
               const SizedBox(height: 5),
               Text(
-                "(Waiting for quiz...)",
+                currentQuiz?['ques'] ?? "(Waiting for quiz...)",
                 style: text.bodyMedium,
               ),
               const SizedBox(height: 10),
               Text("Options", style: text.bodyLarge),
               const SizedBox(height: 5),
               ...List.generate(4, (index) {
+                final optionText = currentQuiz?["op${index + 1}"] ?? "(waiting...)";
                 return ListTile(
-                  title: Text(
-                    "(waiting...)",
-                    style: text.bodyMedium,
-                  ),
+                  title: Text(optionText, style: text.bodyMedium),
                   leading: Radio<int>(
                     value: index,
                     groupValue: _selectedOption,
@@ -70,7 +78,10 @@ class _LivequizpageState extends State<Livequizpage> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        // Action for "Send" goes here
+                        if (_selectedOption != null && currentQuiz != null) {
+                          final selectedAnswer = currentQuiz["op${_selectedOption! + 1}"];
+                          _sendVote(selectedAnswer);
+                        }
                       },
                       child: Text("Send", style: text.bodyMedium),
                     ),
@@ -86,25 +97,72 @@ class _LivequizpageState extends State<Livequizpage> {
                 child: Container(
                   width: double.infinity,
                   color: Colors.black87,
-                  child: ListView.builder(
-                    controller: _scrollController,
-                    itemCount: 10, // Just a placeholder count
-                    itemBuilder: (context, index) {
-                      return Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          "Hello World",
-                          style: const TextStyle(color: Colors.white),
+                  child: currentQuiz == null
+                      ? Center(
+                          child: Text(
+                            "Waiting for quiz...",
+                            style: text.bodyMedium!.copyWith(color: Colors.white),
+                          ),
+                        )
+                      : ListView(
+                          controller: _scrollController,
+                          padding: const EdgeInsets.all(8),
+                          children: [
+                            Text(
+                              "Q: ${currentQuiz["ques"]}",
+                              style: text.bodyLarge!.copyWith(color: Colors.white),
+                            ),
+                            const SizedBox(height: 10),
+                            // Show each option and votes
+                            ...List.generate(4, (index) {
+                              final optionText = currentQuiz["op${index + 1}"];
+                              final votesForOption = sessionState.votes
+                                  .where((v) => v["choosed"] == optionText)
+                                  .toList();
+
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 4.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "${index + 1}. $optionText - Votes: ${votesForOption.length}",
+                                      style: const TextStyle(color: Colors.greenAccent),
+                                    ),
+                                    // Show usernames who voted for this option
+                                    ...votesForOption.map((v) => Padding(
+                                          padding: const EdgeInsets.only(left: 16.0),
+                                          child: Text(
+                                            v["username"] ?? "Unknown",
+                                            style: const TextStyle(color: Colors.white70),
+                                          ),
+                                        )),
+                                  ],
+                                ),
+                              );
+                            }),
+                          ],
                         ),
-                      );
-                    },
-                  ),
                 ),
               ),
               const SizedBox(height: 10),
               ElevatedButton(
                 onPressed: () {
-                  // Action for "Reveal Answer" goes here
+                  if (currentQuiz != null) {
+                    showDialog(
+                      context: context,
+                      builder: (_) => AlertDialog(
+                        title: const Text("Correct Answer"),
+                        content: Text(currentQuiz["ans"] ?? ""),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text("OK"),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
                 },
                 child: Text("Reveal Answer", style: text.bodyMedium),
               ),
