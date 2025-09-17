@@ -1,20 +1,38 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:termview/data/providers/sessionControllerProvider.dart';
+import 'package:termview/data/providers/session_state_provider.dart';
 
-class Showlivechat extends StatefulWidget {
+class Showlivechat extends ConsumerStatefulWidget {
   const Showlivechat({super.key});
 
   @override
-  State<Showlivechat> createState() => _ShowlivechatState();
+  ConsumerState<Showlivechat> createState() => _ShowlivechatState();
 }
 
-class _ShowlivechatState extends State<Showlivechat> {
+class _ShowlivechatState extends ConsumerState<Showlivechat> {
   final FocusNode _chatFocus = FocusNode();
   final TextEditingController _chatController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-
+  @override
+  void dispose(){
+    _chatFocus.dispose();
+    _chatController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final sessionstate = ref.watch(sessionnotifierProvider);
+    ref.listen<SessionState>(sessionnotifierProvider , (previous , next){
+      if(previous?.chats.length != next.chats.length){
+        if(_scrollController.hasClients){
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+      }
+      }
+      
+    });
 
     return Scaffold(
       appBar: AppBar(
@@ -35,14 +53,12 @@ class _ShowlivechatState extends State<Showlivechat> {
                 padding: const EdgeInsets.all(8),
                 child: ListView.builder(
                   controller: _scrollController,
-                  itemCount: 10, // Placeholder item count
+                  itemCount: sessionstate.chats.length,
                   itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Text(
-                        "Hello World",
-                        style: const TextStyle(color: Colors.white),
-                      ),
+                    final chat = sessionstate.chats[index];
+                    return Text(
+                      "${chat['username']}, said : ${chat['content']}",
+                      style: textTheme.bodyMedium!.copyWith(color: Colors.greenAccent),
                     );
                   },
                 ),
@@ -60,15 +76,26 @@ class _ShowlivechatState extends State<Showlivechat> {
                     decoration: const InputDecoration(
                       hintText: "What's on your mind?",
                     ),
-                    onSubmitted: (_) {
-                      // Handle submitted input here
+                    onSubmitted: (_){
+                       if(_chatController.text.trim().isNotEmpty){
+                    final chatText = _chatController.text.trim();
+                    ref.read(Sessioncontrollerprovider).sendChat(chatText);
+                    _chatController.clear();
+                    _chatFocus.requestFocus();
+                    }
                     },
                   ),
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton(
                   onPressed: () {
-                    // Handle send button press here
+                    if(_chatController.text.trim().isNotEmpty){
+                    final chatText = _chatController.text.trim();
+                    ref.read(Sessioncontrollerprovider).sendChat(chatText);
+                    _chatController.clear();
+                    _chatFocus.requestFocus();
+                    }
+                    
                   },
                   style: ElevatedButton.styleFrom(
                     textStyle: textTheme.bodyMedium,
