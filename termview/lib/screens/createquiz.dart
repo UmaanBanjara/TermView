@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:termview/data/providers/sessionControllerProvider.dart';
+import 'package:termview/data/providers/session_state_provider.dart';
+import 'package:termview/screens/livequizpage.dart';
+import 'package:termview/widgets/page_transition.dart';
 
-class Createquiz extends StatefulWidget {
+class Createquiz extends ConsumerStatefulWidget {
   const Createquiz({super.key});
 
   @override
-  State<Createquiz> createState() => _CreatequizState();
+  ConsumerState<Createquiz> createState() => _CreatequizState();
 }
 
-class _CreatequizState extends State<Createquiz> {
+class _CreatequizState extends ConsumerState<Createquiz> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _ques = TextEditingController();
   final TextEditingController _ans = TextEditingController();
@@ -17,8 +22,19 @@ class _CreatequizState extends State<Createquiz> {
   final TextEditingController _op4 = TextEditingController();
 
   @override
+  void dispose(){
+    _ques.dispose();
+    _ans.dispose();
+    _op1.dispose();
+    _op2.dispose();
+    _op3.dispose();
+    _op4.dispose();
+    super.dispose();
+  }
+  @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    final sessionstate = ref.watch(sessionnotifierProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -111,7 +127,26 @@ class _CreatequizState extends State<Createquiz> {
                   children: [
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () async {},
+                        onPressed: (){
+                          if(_formKey.currentState!.validate()){
+                            final quizData = {
+                              "ques" : _ques.text.trim(),
+                              "op1" : _op1.text.trim(),
+                              "op2" : _op2.text.trim(),
+                              "op3" : _op3.text.trim(),
+                              "op4" : _op4.text.trim(),
+                              "ans" : _ans.text.trim()
+                            };
+                            ref.read(Sessioncontrollerprovider).sendQuiz(quizData);
+                            _ques.clear();
+                            _op1.clear();
+                            _op2.clear();
+                            _op3.clear();
+                            _op4.clear();
+                            _ans.clear();
+                            navigate(context, Livequizpage(host: true,user: false,));
+                          }
+                        },
                         style: ElevatedButton.styleFrom(
                             minimumSize: const Size(0, 50),
                             textStyle: text.bodyMedium),
