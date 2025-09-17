@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:termview/data/providers/sessionControllerProvider.dart';
 import 'package:termview/data/providers/session_state_provider.dart';
+import 'package:termview/screens/homescreen.dart';
+import 'package:termview/widgets/snackbar.dart';
 
 class Joinedsessionchat extends ConsumerStatefulWidget {
   Joinedsessionchat({super.key});
@@ -33,6 +35,17 @@ class _JoinedsessionchatState extends ConsumerState<Joinedsessionchat> {
         }
       }
     });
+    ref.listen<SessionState>(sessionnotifierProvider , (previous , next){
+      if(next.message != null && next.message != previous?.message){
+        showTerminalSnackbar(context, next.message! , isError: false);
+        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_)=> Homescreen()) , (route) => false);
+      }
+    });
+        ref.listen<SessionState>(sessionnotifierProvider , (previous , next){
+      if(next.reveal != null && next.reveal != previous?.reveal){
+        showTerminalSnackbar(context, "The answer is ${next.reveal}" , isError: false);
+      }
+    });
 
     return Scaffold(
       appBar: AppBar(
@@ -56,12 +69,27 @@ class _JoinedsessionchatState extends ConsumerState<Joinedsessionchat> {
                         itemCount: sessionstate.chats.length,
                         itemBuilder: (context, index) {
                           final chat = sessionstate.chats[index];
-                          return Text(
-                          "${chat['username']}, said : ${chat['content']}",
-                          style: textTheme.bodyMedium!.copyWith(color: Colors.greenAccent),
+                          return RichText(
+                            text: TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: "${chat['username']}",
+                                  style: textTheme.bodyMedium!.copyWith(color: Colors.blueAccent), // username color
+                                ),
+                                TextSpan(
+                                  text: " said: ",
+                                  style: textTheme.bodyMedium!.copyWith(color: Colors.grey), // separator color
+                                ),
+                                TextSpan(
+                                  text: "${chat['content']}",
+                                  style: textTheme.bodyMedium!.copyWith(color: Colors.purpleAccent), // message color
+                                ),
+                              ],
+                            ),
                           );
                         },
-                      ),
+                      )
+
                     ),
                     Row(
                       children: [
