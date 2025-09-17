@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:termview/data/providers/live_session_provider.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:termview/data/providers/sessionControllerProvider.dart';
 import 'package:termview/screens/joinedsession.dart';
 import 'package:termview/widgets/page_transition.dart';
 import 'package:termview/widgets/snackbar.dart';
+
 
 Future<void> joinsession(
   BuildContext context,
@@ -15,6 +17,7 @@ Future<void> joinsession(
   // Capture the original context for safe use after async operations
   final parentContext = context;
   final text = Theme.of(context).textTheme;
+  final storage = const FlutterSecureStorage();
 
   await showDialog(
     context: context,
@@ -37,29 +40,18 @@ Future<void> joinsession(
           ),
           ElevatedButton(
             onPressed: () async {
-              // Close the dialog first
-              Navigator.pop(dialogContext);
-
-              // Use Future.microtask to ensure async operation happens after dialog is closed
-              Future.microtask(() async {
-                try {
-                  // Perform the live session join
-                  final success = await ref
-                      .read(livesessionnotifierProvider.notifier)
-                      .live_session(session_id: sessionId);
-
-                  // Navigate to the joined session page using the safe context
-                  navigate(parentContext, Joinesesion(sessionId: sessionId , title: title , desc: desc,));
-                } catch (e) {
-                  // Show snackbar using the safe context
-                  showTerminalSnackbar(
-                    parentContext,
-                    "Connection error: $e",
-                    isError: true,
-                  );
-                }
-              });
-            },
+            Navigator.pop(dialogContext);
+            final token = await storage.read(key: 'access-token');
+            if (sessionId.trim().isNotEmpty && token != null) {
+              ref.read(Sessioncontrollerprovider).connect(
+                'wss://termview-backend.onrender.com/ws/$sessionId?token=$token'
+              );
+              navigate(parentContext, Joinesesion(sessionId: sessionId,title: title,desc: desc,));
+            } else {
+              showTerminalSnackbar(parentContext, "Either SessionId or token is null", isError: true);
+            }
+          }
+          ,
             child: Text('Yes'),
           ),
         ],
