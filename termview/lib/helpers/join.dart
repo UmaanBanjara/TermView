@@ -13,6 +13,7 @@ Future<void> joinsession(
   String sessionId,
   String? title,
   String? desc,
+  bool? is_chat,
 ) async {
   // Capture the original context for safe use after async operations
   final parentContext = context;
@@ -41,12 +42,12 @@ Future<void> joinsession(
           ElevatedButton(
             onPressed: () async {
             Navigator.pop(dialogContext);
-            final token = await storage.read(key: 'access-token');
+            final token = await storage.read(key: 'access_token');
             if (sessionId.trim().isNotEmpty && token != null) {
               ref.read(Sessioncontrollerprovider).connect(
                 'wss://termview-backend.onrender.com/ws/$sessionId?token=$token'
               );
-              navigate(parentContext, Joinesesion(sessionId: sessionId,title: title,desc: desc,));
+              navigate(parentContext, Joinesesion(sessionId: sessionId,title: title,desc: desc,is_chat: is_chat,));
             } else {
               showTerminalSnackbar(parentContext, "Either SessionId or token is null", isError: true);
             }
