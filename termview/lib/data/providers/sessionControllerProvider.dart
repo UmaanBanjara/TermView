@@ -23,6 +23,12 @@ class Sessioncontroller {
         ref.read(sessionnotifierProvider.notifier).addquiz(decoded);
       } else if (decoded['type'] == 'vote'){
         ref.read(sessionnotifierProvider.notifier).addvoute(decoded);
+      } else if (decoded['type'] == 'endsession'){
+        ref.read(sessionnotifierProvider.notifier).endMessage(decoded['message'] ?? "Session ended. Thanks for joining in");        
+      } else if (decoded['type'] == 'usercount'){
+        ref.read(sessionnotifierProvider.notifier).updateJoined(decoded['count']);
+      } else if (decoded['type'] == 'revealanswer'){
+        ref.read(sessionnotifierProvider.notifier).revealAnswer(decoded['answer'] ?? "Answer couldn't be found");
       }
     },onError: (error){
       print('Websocket error : $error');
@@ -63,6 +69,20 @@ class Sessioncontroller {
     _channel?.sink.add(jsonEncode({
       "type" : "vote",
       "choosed" : vote
+    }));
+  }
+
+  void endSession(){
+    _channel?.sink.add(jsonEncode({
+      "type" : "endsession",
+
+    }));
+  }
+
+  void revealAnswer(String answer){
+    _channel?.sink.add(jsonEncode({
+      "type" : "revealanswer",
+      "answer" : answer
     }));
   }
 }
