@@ -12,6 +12,7 @@ class PostState{
   final String? description;
   final String? link;
   final String? ses_id;
+  final bool? chat;
 
   PostState({
     this.loading = false,
@@ -22,6 +23,7 @@ class PostState{
     this.description,
     this.link,
     this.ses_id,
+    this.chat
   }); 
 
   PostState copyWith({
@@ -33,6 +35,7 @@ class PostState{
     String? description,
     String? link,
     String? ses_id,
+    bool? chat,
   }){
     return PostState(
       loading: loading ?? this.loading,
@@ -42,7 +45,8 @@ class PostState{
       title: title ?? this.title,
       description: description ?? this.description,
       link: link ?? this.link,
-      ses_id: ses_id ?? this.ses_id
+      ses_id: ses_id ?? this.ses_id,
+      chat: chat ?? this.chat
     );
   }
 }
@@ -72,7 +76,8 @@ class PostNotifier extends StateNotifier<PostState>{
         title: result['title'] ?? "Can't get title",
         description: result['desc'] ?? "Can't get description",
         link: result['link'] ?? "Can't get link",
-        ses_id: result['ses_id'] ?? "Can't get session_id"
+        ses_id: result['ses_id'] ?? "Can't get session_id",
+        chat : result['enable_chat'] ?? false
 
         
       );
