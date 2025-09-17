@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:termview/data/providers/session_state_provider.dart';
 import 'package:termview/data/providers/sessionControllerProvider.dart';
+import 'package:termview/screens/homescreen.dart';
+import 'package:termview/widgets/snackbar.dart';
 
 class Livequizpage extends ConsumerStatefulWidget {
   final bool? host;
@@ -31,7 +33,17 @@ class _LivequizpageState extends ConsumerState<Livequizpage> {
     final text = Theme.of(context).textTheme;
     final sessionState = ref.watch(sessionnotifierProvider);
     final currentQuiz = sessionState.quizzes.isNotEmpty ? sessionState.quizzes.last : null;
-
+    ref.listen<SessionState>(sessionnotifierProvider , (previous , next){
+      if(next.message != null && next.message != previous?.message){
+        showTerminalSnackbar(context, next.message! , isError: false);
+        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_)=> Homescreen()) , (route) => false);
+      }
+    });
+    ref.listen<SessionState>(sessionnotifierProvider , (previous , next){
+      if(next.reveal != null && next.reveal != previous?.reveal){
+        showTerminalSnackbar(context, "The answer is ${next.reveal}" , isError: false);
+      }
+    });
     return Scaffold(
       appBar: AppBar(
         title: Text("Live Quiz Monitor", style: text.bodyLarge),
@@ -148,21 +160,7 @@ class _LivequizpageState extends ConsumerState<Livequizpage> {
               const SizedBox(height: 10),
               ElevatedButton(
                 onPressed: () {
-                  if (currentQuiz != null) {
-                    showDialog(
-                      context: context,
-                      builder: (_) => AlertDialog(
-                        title: const Text("Correct Answer"),
-                        content: Text(currentQuiz["ans"] ?? ""),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text("OK"),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
+                  ref.read(Sessioncontrollerprovider).revealAnswer(currentQuiz?["ans"]);
                 },
                 child: Text("Reveal Answer", style: text.bodyMedium),
               ),
