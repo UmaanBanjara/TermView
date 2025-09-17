@@ -52,16 +52,31 @@ class _ShowlivechatState extends ConsumerState<Showlivechat> {
                 color: Colors.black87,
                 padding: const EdgeInsets.all(8),
                 child: ListView.builder(
-                  controller: _scrollController,
-                  itemCount: sessionstate.chats.length,
-                  itemBuilder: (context, index) {
-                    final chat = sessionstate.chats[index];
-                    return Text(
-                      "${chat['username']}, said : ${chat['content']}",
-                      style: textTheme.bodyMedium!.copyWith(color: Colors.greenAccent),
-                    );
-                  },
-                ),
+                controller: _scrollController,
+                itemCount: sessionstate.chats.length,
+                itemBuilder: (context, index) {
+                  final chat = sessionstate.chats[index];
+                  return RichText(
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: "${chat['username']}",
+                          style: textTheme.bodyMedium!.copyWith(color: Colors.blueAccent), // username color
+                        ),
+                        TextSpan(
+                          text: " said: ",
+                          style: textTheme.bodyMedium!.copyWith(color: Colors.grey), // separator color
+                        ),
+                        TextSpan(
+                          text: "${chat['content']}",
+                          style: textTheme.bodyMedium!.copyWith(color: Colors.purpleAccent), // message color
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              )
+
               ),
             ),
             const SizedBox(height: 10),
