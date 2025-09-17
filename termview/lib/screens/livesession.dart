@@ -1,8 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:termview/data/notifiers/endsession_notifier.dart';
 import 'package:termview/data/providers/endsession_provider.dart';
-import 'package:termview/data/providers/live_session_provider.dart';
+import 'package:termview/data/providers/sessionControllerProvider.dart';
+import 'package:termview/data/providers/session_state_provider.dart';
 import 'package:termview/helpers/sharesession.dart';
 import 'package:termview/screens/homescreen.dart';
 import 'package:termview/widgets/page_transition.dart';
@@ -32,13 +35,37 @@ class _LivesessionState extends ConsumerState<Livesession> {
   final TextEditingController _command = TextEditingController();
   final FocusNode _terminalfocus = FocusNode();
   final ScrollController _scrollController = ScrollController();
+  final _storage = const FlutterSecureStorage();
+
+  @override   
+  void initState(){
+    super.initState();
+    Future.microtask(()async{
+      final token =await _storage.read(key: 'access_token');
+      
+      if(widget.ses_id != null && token != null){
+        ref.read(Sessioncontrollerprovider).connect('wss://termview-backend.onrender.com/ws/${widget.ses_id}?token=$token');
+      }
+      else{
+        showTerminalSnackbar(context, "Either sessionId or token is null. Please try again",isError: true);
+        return;
+      }
+    });
+  }
+
+  @override   
+  void dispose(){
+    ref.read(Sessioncontrollerprovider).disconnect();
+    _command.dispose();
+    _terminalfocus.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    final sessionstate = ref.watch(livesessionnotifierProvider);
-    final endstate = ref.watch(endsessionnotifierProvider);
-
+    final sessionstate = ref.watch(sessionnotifierProvider);
     ref.listen<EndState>(endsessionnotifierProvider, (previous, next) {
       if (next.message != null && next.message != previous?.message) {
         showTerminalSnackbar(context, next.message!, isError: false);
@@ -46,6 +73,15 @@ class _LivesessionState extends ConsumerState<Livesession> {
       } else if (next.error != null && next.error != previous?.error) {
         showTerminalSnackbar(context, next.error!, isError: true);
       }
+    });
+
+    ref.listen<SessionState>(sessionnotifierProvider , (previous,next){
+      if(previous?.commands.length != next.commands.length){
+      if(_scrollController.hasClients){
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+      }
+      }
+      
     });
 
     return Scaffold(
@@ -134,8 +170,14 @@ class _LivesessionState extends ConsumerState<Livesession> {
                 padding: const EdgeInsets.all(8),
                 child: ListView.builder(
                   controller: _scrollController,
+                  itemCount: sessionstate.commands.length,
                   itemBuilder: (context, index) {
-                    return Text("Hello World");
+                    final command = sessionstate.commands[index];
+                    return Text(
+                      command['result']?['output'] ?? command['commands'] ?? "",
+                      style: text.bodyMedium!.copyWith(color: Colors.greenAccent),
+                    );
+
                   },
                 ),
               ),
@@ -152,12 +194,28 @@ class _LivesessionState extends ConsumerState<Livesession> {
                     decoration: const InputDecoration(
                       hintText: "Enter commands",
                     ),
-                    onSubmitted: (_) {},
+                    onSubmitted: (_) {
+                      final commandText = _command.text.trim();
+                    if(commandText.isNotEmpty){
+                      ref.read(Sessioncontrollerprovider).sendCommand(commandText);
+                      _command.clear();
+                      _terminalfocus.requestFocus();
+                    }
+                    
+                    },
                   ),
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    final commandText = _command.text.trim();
+                    if(commandText.isNotEmpty){
+                      ref.read(Sessioncontrollerprovider).sendCommand(commandText);
+                      _command.clear();
+                      _terminalfocus.requestFocus();
+                    }
+                     
+                  },
                   style: ElevatedButton.styleFrom(textStyle: text.bodyMedium),
                   child: const Text('Send'),
                 ),
