@@ -5,10 +5,6 @@ import json
 import aiohttp
 from app.utils.current_user import get_user_id_from_token
 from app.utils.get_username import getusername
-from app.CRUD.chat_crud import new_chat
-from app.CRUD.command_crud import new_command
-from app.CRUD.quiz_crud import new_quiz
-from app.utils.chatandcommand import get_chat_history, get_command_history, get_quiz_history
 
 router = APIRouter()
 
@@ -22,33 +18,6 @@ class ConnectionManager:
             self.connections[session_id] = {}
         self.connections[session_id][user_id] = websocket
         print(f"Connection added: SessionId={session_id}, UserId={user_id}, Total Users={len(self.connections[session_id])}")
-
-        # Send previous chats
-        for chat in get_chat_history(session_id):
-            await websocket.send_text(json.dumps({
-                'type': 'chat',
-                'content': chat.message,
-                'username': getusername(chat.user_id) or "Unknown"
-            }))
-
-        # Send previous commands
-        for command in get_command_history(session_id):
-            await websocket.send_text(json.dumps({
-                'type': 'command',
-                'commands': command.command_txt
-            }))
-
-        # Send previous quizzes
-        for q in get_quiz_history(session_id):
-            await websocket.send_text(json.dumps({
-                'type': 'quiz',
-                'ques': q.ques,
-                'op1': q.a1,
-                'op2': q.a2,
-                'op3': q.a3,
-                'op4': q.a4,
-                'ans': q.ans
-            }))
 
         await self.broadcast_user_count(session_id)
 
@@ -64,22 +33,28 @@ class ConnectionManager:
 
     async def broadcast(self, session_id: str, message: str):
         if session_id in self.connections:
-            tasks = [self._safe_send(session_id, user_id, ws, message)
-                     for user_id, ws in self.connections[session_id].items()]
+            tasks = [
+                self._safe_send(session_id, user_id, ws, message)
+                for user_id, ws in self.connections[session_id].items()
+            ]
             await asyncio.gather(*tasks)
 
     async def broadcast_user_count(self, session_id: str):
         if session_id in self.connections:
             message = json.dumps({"type": "usercount", "count": len(self.connections[session_id])})
-            tasks = [self._safe_send(session_id, user_id, ws, message)
-                     for user_id, ws in self.connections[session_id].items()]
+            tasks = [
+                self._safe_send(session_id, user_id, ws, message)
+                for user_id, ws in self.connections[session_id].items()
+            ]
             await asyncio.gather(*tasks)
 
     async def end_session(self, session_id: str):
         if session_id in self.connections:
             message = json.dumps({"type": "endsession", "message": "Host has ended the session. Thanks for tuning in"})
-            tasks = [self._safe_send(session_id, user_id, ws, message)
-                     for user_id, ws in self.connections[session_id].items()]
+            tasks = [
+                self._safe_send(session_id, user_id, ws, message)
+                for user_id, ws in self.connections[session_id].items()
+            ]
             await asyncio.gather(*tasks)
 
             for ws in self.connections[session_id].values():
@@ -93,7 +68,9 @@ class ConnectionManager:
         except Exception:
             await self.disconnect(session_id, user_id)
 
+
 manager = ConnectionManager()
+
 
 async def call_command_api(session_id: str, command: str):
     """Call external API and broadcast result without blocking."""
@@ -105,7 +82,7 @@ async def call_command_api(session_id: str, command: str):
     try:
         async with aiohttp.ClientSession() as session:
             async with session.post(url, json=payload, headers=headers) as resp:
-                print("Response Status : ",resp.status)
+                print("Response Status : ", resp.status)
                 if resp.status == 200:
                     result = await resp.json()
                 else:
@@ -113,12 +90,12 @@ async def call_command_api(session_id: str, command: str):
     except Exception as e:
         result = {"error": f"API call failed: {e}"}
 
-    # Broadcast the API result
     await manager.broadcast(session_id, json.dumps({
         "type": "command_result",
         "command": command,
         "result": result
     }))
+
 
 @router.websocket("/ws/{session_id}")
 async def websocket_endpoint(websocket: WebSocket, session_id: str, token: str = Query(...)):
@@ -141,7 +118,6 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str, token: str =
             elif msg_type == "chat":
                 username = getusername(int(user_id)) or "Unknown"
                 content = decoded.get("content")
-                new_chat(session_id=session_id, user_id=int(user_id), message=content)
                 await manager.broadcast(session_id, json.dumps({
                     "type": "chat",
                     "content": content,
@@ -156,30 +132,18 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str, token: str =
                     "username": username
                 }))
 
-            elif msg_type == "command":
-                commands = decoded.get("commands")
-                new_command(session_id=session_id, command_txt=commands)
-
-                # Fire async API call without blocking WebSocket
-                asyncio.create_task(call_command_api(session_id, commands))
-
-                # Broadcast the command itself immediately
-                await manager.broadcast(session_id, json.dumps({
-                    "type": "command_output",
-                    "command": commands
+            elif msg_type == "revealanswer":
+                await manager.broadcast(session_id , json.dumps({
+                    "type" : "revealanswer",
+                    "answer" : decoded.get("answer")
                 }))
 
+            elif msg_type == "command":
+                commands = decoded.get("commands")
+                asyncio.create_task(call_command_api(session_id, commands))
+                
+
             elif msg_type == "quiz":
-                new_quiz(
-                    user_id=int(user_id),
-                    ques=decoded.get("ques"),
-                    a1=decoded.get("op1"),
-                    a2=decoded.get("op2"),
-                    a3=decoded.get("op3"),
-                    a4=decoded.get("op4"),
-                    ans=decoded.get("ans"),
-                    session_id=session_id
-                )
                 await manager.broadcast(session_id, json.dumps({
                     "type": "quiz",
                     "ques": decoded.get("ques"),
