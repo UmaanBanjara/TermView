@@ -74,7 +74,7 @@ manager = ConnectionManager()
 
 async def call_command_api(session_id: str, command: str):
     """Call external API and broadcast result without blocking."""
-    url = "https://docker-executor.onrender.com/execute"
+    url = "your-render-url"
     payload = {"cmd": command}
     print(f"Calling api : {url} with payload {payload}")
     headers = {"Content-Type": "application/json"}
