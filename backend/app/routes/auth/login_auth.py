@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, EmailStr
 from app.CRUD.login_crud import check_user
 from app.utils.jwt_handler import create_access_token
+from app.utils.jwt_handler import create_refresh_token
 
 class UserCheck(BaseModel):
     email:EmailStr
@@ -19,10 +20,14 @@ def login(user : UserCheck):
     #create jwt token with user_id
     access_token = create_access_token(data={"user_id" : user_in_db.id})
 
+    # #create refresh token with user_id
+    # refresh_token = create_refresh_token(data={"user_id" : user_in_db.id})
+
     #return everything
     return {
         "message" : "Login Successfull",
         "access_token" : access_token,
         "token_type" : "bearer",
-        "username" : user_in_db.username
+        "username" : user_in_db.username,
+        
     }
