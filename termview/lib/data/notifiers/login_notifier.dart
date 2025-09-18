@@ -46,6 +46,11 @@ class LoginNotifier extends StateNotifier<LoginState> {
       if (token != null){
         await _storage.write(key: "access_token", value: token);
       }
+
+      final r_token = result['refresh_token'];
+      if(r_token != null){
+        await _storage.write(key: "r_token", value: r_token);
+      }
       
 
       state = state.copyWith(
