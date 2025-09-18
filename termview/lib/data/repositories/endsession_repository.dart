@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class EndsessionRepository {
-  final String baseUrl = 'https://termview-backend.onrender.com';
+  final String baseUrl = 'your-render-url';
 
   Future<Map<String,dynamic>> endsession({
     required String post_id,
