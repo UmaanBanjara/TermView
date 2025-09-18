@@ -130,18 +130,7 @@
                     style: ElevatedButton.styleFrom(textStyle: text.bodyMedium),
                     child: Text((sessionstate.joined ?? 0).toString())
                   ),
-                  ElevatedButton(
-                    onPressed: () {
-                      if (widget.link != null) {
-                        sharesession(context, link: widget.link!);
-                      } else {
-                        showTerminalSnackbar(context, "No link available",
-                            isError: false);
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(textStyle: text.bodyMedium),
-                    child: const Text("Share Session"),
-                  ),
+                  
                   ElevatedButton(
                     onPressed: () {
                       navigate(context, Createquiz());
