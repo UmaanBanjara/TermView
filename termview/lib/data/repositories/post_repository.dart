@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 
 
 class PostRepository {
-  final String baseUrl = 'https://termview-backend.onrender.com';
+  final String baseUrl = 'your-render-url';
 
   Future<Map<String , dynamic>> post({
     required String title,
