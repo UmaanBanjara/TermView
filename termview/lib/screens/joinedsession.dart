@@ -149,16 +149,7 @@ class _JoinesesionState extends ConsumerState<Joinesesion> {
               ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            child: ElevatedButton(
-              onPressed: () {
-                sharesession(context, link: "Hello World");
-              },
-              style: ElevatedButton.styleFrom(textStyle: text.bodyMedium),
-              child: const Text("Share"),
-            ),
-          ),
+          
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             child: ElevatedButton(
