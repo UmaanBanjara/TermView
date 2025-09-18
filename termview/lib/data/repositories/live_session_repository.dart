@@ -2,7 +2,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class LiveSessionRepository {
-  final String baseUrl = 'wss://termview-backend.onrender.com/ws';
+  final String baseUrl = 'your-render-url';
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
   Future<WebSocketChannel> connect(String session_id)async{
     try{
