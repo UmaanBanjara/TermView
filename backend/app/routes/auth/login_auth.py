@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, EmailStr
 from app.CRUD.login_crud import check_user
 from app.utils.jwt_handler import create_access_token
-from app.utils.jwt_handler import create_refresh_token
+# from app.utils.jwt_handler import create_refresh_token
 
 class UserCheck(BaseModel):
     email:EmailStr
